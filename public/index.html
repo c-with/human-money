@@ -1,0 +1,1571 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>企业用工成本工具箱 V1.2</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--primary:#059669;--primary-light:#10b981;--primary-soft:#ecfdf5;--bg:#f8fafc;--card:#fff;--text:#1e293b;--muted:#94a3b8;--line:#e2e8f0;--warn:#f59e0b}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);line-height:1.6;-webkit-tap-highlight-color:transparent;padding-bottom:80px}
+.topbar{position:sticky;top:0;z-index:100;background:var(--primary);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.topbar h1{font-size:16px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.topbar .back-btn{background:none;border:none;color:#fff;font-size:20px;cursor:pointer;padding:4px;touch-action:manipulation;flex-shrink:0}
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:100;background:#fff;border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:6px 0;padding-bottom:max(6px,env(safe-area-inset-bottom))}
+.bottom-nav .nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:none;color:var(--muted);font-size:10px;cursor:pointer;padding:4px 8px;touch-action:manipulation;min-width:60px}
+.bottom-nav .nav-item.active{color:var(--primary);font-weight:600}
+.bottom-nav .nav-item .nav-icon{font-size:20px}
+.page{display:none;padding:16px;max-width:480px;margin:0 auto}.page.active{display:block}
+.hero{text-align:center;padding:32px 16px 24px;background:linear-gradient(135deg,var(--primary),#047857);color:#fff;border-radius:0 0 24px 24px;margin:-16px -16px 24px}
+.hero h2{font-size:22px;font-weight:800;margin-bottom:6px}.hero p{font-size:13px;opacity:.85}
+.cards{display:flex;flex-direction:column;gap:14px;margin-bottom:24px}
+.card{background:var(--card);border-radius:16px;padding:20px;box-shadow:0 2px 12px rgba(0,0,0,.06);border:1.5px solid var(--line);cursor:pointer;transition:transform .15s,box-shadow .15s;touch-action:manipulation}
+.card:active{transform:scale(.98)}
+.card-icon{font-size:32px;margin-bottom:10px}.card h3{font-size:16px;color:var(--primary);margin-bottom:4px}.card p{font-size:13px;color:var(--muted);line-height:1.5}
+.disclaimer{text-align:center;font-size:11px;color:var(--muted);padding:16px;line-height:1.6}
+.disclaimer b{color:var(--text)}
+/* 模式切换 */
+.mode-tabs{display:flex;gap:0;margin-bottom:20px;background:var(--line);border-radius:10px;padding:3px}
+.mode-tab{flex:1;padding:10px 8px;font-size:13px;font-weight:600;border:none;background:transparent;color:var(--muted);cursor:pointer;border-radius:8px;transition:all .2s;text-align:center;touch-action:manipulation}
+.mode-tab.active{background:#fff;color:var(--primary);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+/* 表单面板 */
+.form-panel{display:none}.form-panel.active{display:block;animation:fadeIn .2s}
+/* quick buttons */
+.quick-btns{display:flex;gap:8px;margin-top:6px}
+.quick-btn{flex:1;padding:8px 10px;font-size:12px;font-weight:600;border:1.5px solid var(--line);border-radius:8px;background:#fff;cursor:pointer;touch-action:manipulation;color:var(--primary);text-align:center;transition:border-color .15s}
+.quick-btn:active{border-color:var(--primary)}
+.quick-btn.min-trial{border-color:#f59e0b;color:#b45309;background:#fffbeb}
+.quick-btn.sync-gross{border-color:var(--primary);color:var(--primary);background:var(--primary-soft)}
+.hint-text{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.5}
+/* Radio group for reverse form */
+.radio-group{display:flex;flex-direction:column;gap:6px;margin-top:4px}
+.radio-item{display:flex;align-items:flex-start;gap:8px;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;cursor:pointer;touch-action:manipulation;transition:border-color .15s;font-size:13px}
+.radio-item.selected{border-color:var(--primary);background:var(--primary-soft)}
+.radio-item input[type="radio"]{accent-color:var(--primary);width:16px;height:16px;margin-top:2px;flex-shrink:0}
+.radio-item .radio-label{font-weight:500}.radio-item .radio-desc{font-size:11px;color:var(--muted);margin-top:1px}
+/* 表单 */
+.section-title{font-size:15px;font-weight:700;color:var(--text);margin:20px 0 12px;padding-left:10px;border-left:3px solid var(--primary)}
+.field{margin-bottom:14px}.field label{display:block;font-size:13px;color:#475569;margin-bottom:4px;font-weight:500}
+.field input:not([type="checkbox"]):not([type="radio"]),.field select{width:100%;padding:10px 12px;font-size:15px;border:1.5px solid var(--line);border-radius:10px;background:#fff;touch-action:manipulation;-webkit-tap-highlight-color:transparent;outline:none;transition:border-color .15s}
+.field input:focus,.field select:focus{border-color:var(--primary)}
+.field input[type="number"]{-moz-appearance:textfield}.field input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none}
+.advanced-toggle{display:flex;align-items:center;gap:6px;color:var(--primary);font-size:13px;font-weight:600;cursor:pointer;padding:8px 0;touch-action:manipulation;background:none;border:none;width:100%;text-align:left}
+.advanced-toggle .arrow{transition:transform .2s}.advanced-toggle.open .arrow{transform:rotate(90deg)}
+.advanced-panel{display:none}.advanced-panel.open{display:block;animation:fadeIn .2s}
+/* 按钮 */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:12px 20px;font-size:15px;font-weight:600;border:none;border-radius:12px;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;transition:opacity .15s;width:100%}
+.btn:active{opacity:.8}
+.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary-light)}
+.btn-outline{background:#fff;color:var(--primary);border:1.5px solid var(--primary)}
+.btn-sm{padding:8px 14px;font-size:13px;border-radius:10px}
+/* 结果 */
+.result-area{display:none;margin-top:20px}.result-area.show{display:block;animation:fadeIn .3s}
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.kpi-card{border-radius:12px;padding:14px 16px;color:#fff}
+.kpi-card.dark{background:linear-gradient(135deg,var(--primary),#047857)}
+.kpi-card.light{background:linear-gradient(135deg,#10b981,#059669)}
+.kpi-card .kpi-label{font-size:12px;opacity:.9;margin-bottom:4px}
+.kpi-card .kpi-value{font-size:20px;font-weight:800}
+/* 明细 */
+.detail-section{background:var(--card);border-radius:14px;padding:16px;margin-bottom:14px;border:1px solid var(--line)}
+.detail-section h3{font-size:14px;font-weight:700;margin-bottom:12px;color:var(--text)}
+.detail-table{width:100%;border-collapse:collapse;font-size:13px}
+.detail-table thead th{text-align:left;padding:8px 6px;font-size:11px;color:var(--muted);font-weight:500;border-bottom:2px solid var(--line)}
+.detail-table thead th:last-child,.detail-table thead th:nth-child(2){text-align:right}
+.detail-table td{padding:7px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+.detail-table td:last-child,.detail-table td:nth-child(2){text-align:right;font-variant-numeric:tabular-nums}
+.detail-table .item-name{font-weight:500;color:var(--text)}
+.detail-table .rate-info{font-size:11px;color:var(--muted);font-weight:400;display:block;margin-top:1px;line-height:1.4}
+.detail-table .subtotal td{font-weight:700;background:#f0fdf4;border-bottom:2px solid var(--primary)}
+.detail-table .settlement td{font-weight:700;background:#ecfdf5;border:2px solid var(--primary);border-radius:8px;color:var(--primary)}
+/* 拆分卡片 */
+.breakdown-card{background:var(--card);border-radius:14px;padding:16px;margin-bottom:14px;border:1.5px solid var(--line)}
+.breakdown-card h3{font-size:14px;font-weight:700;color:var(--text);margin-bottom:10px}
+.breakdown-card .br-row{display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--line);font-size:13px}
+.breakdown-card .br-row:last-child{border-bottom:none}
+.breakdown-card .br-row .br-label{color:#475569}
+.breakdown-card .br-row .br-value{font-weight:600;text-align:right}
+.breakdown-card .br-total{font-weight:700;color:var(--primary);font-size:15px;margin-top:6px;padding-top:8px;border-top:2px solid var(--primary);display:flex;justify-content:space-between}
+/* 结算卡片 */
+.settlement-card{background:#ecfdf5;border:2px solid var(--primary);border-radius:14px;padding:20px;margin-bottom:14px}
+.settlement-card h3{font-size:14px;font-weight:700;color:var(--primary);margin-bottom:14px}
+.settlement-row{display:flex;justify-content:space-between;align-items:baseline;padding:10px 0;border-bottom:1px solid #d1fae5}
+.settlement-row:last-child{border-bottom:none}
+.settlement-row .s-label{font-size:13px;color:#065f46;font-weight:500}
+.settlement-row .s-value{font-size:18px;font-weight:800;color:var(--primary)}
+.settlement-row .s-formula{font-size:11px;color:var(--muted);display:block;margin-top:2px;line-height:1.6}
+/* 综合预算 */
+.composite-budget{background:var(--card);border-radius:14px;padding:16px;margin-bottom:14px;border:1.5px solid var(--line)}
+.composite-budget h3{font-size:14px;font-weight:700;color:var(--text);margin-bottom:10px}
+.composite-budget .cb-row{display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;font-size:13px}
+.composite-budget .cb-row .cb-label{color:#475569}
+.composite-budget .cb-row .cb-value{font-weight:600}
+.composite-budget .cb-total{font-weight:700;color:var(--primary);font-size:15px;margin-top:6px;padding-top:8px;border-top:2px solid var(--primary);display:flex;justify-content:space-between}
+/* 方案对比 */
+.compare-section{margin-bottom:14px}
+.compare-toggle{display:flex;align-items:center;gap:6px;color:var(--primary);font-size:13px;font-weight:600;cursor:pointer;padding:8px 0;background:none;border:none;width:100%;text-align:left}
+.compare-toggle .arrow{transition:transform .2s}
+.compare-toggle.open .arrow{transform:rotate(90deg)}
+.compare-panel{display:none;background:var(--card);border-radius:12px;padding:14px;border:1px solid var(--line)}
+.compare-panel.open{display:block;animation:fadeIn .2s}
+.compare-table{width:100%;border-collapse:collapse;font-size:12px}
+.compare-table th,.compare-table td{padding:8px 6px;border-bottom:1px solid var(--line);text-align:left}
+.compare-table th{font-size:11px;color:var(--muted);font-weight:500}
+.compare-table td{font-weight:500}
+.compare-table tr.diff td{color:var(--primary);font-weight:700;background:#f0fdf4}
+/* 其他成本 */
+.other-costs{background:var(--card);border-radius:14px;padding:16px;margin-bottom:14px;border:1.5px solid var(--line)}
+.other-costs h3{font-size:14px;font-weight:700;margin-bottom:12px;color:var(--text)}
+.other-costs .oc-row{display:flex;justify-content:space-between;align-items:baseline;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px}
+.other-costs .oc-row:last-child{border-bottom:none}
+.other-costs .oc-row .oc-label{color:#475569}.other-costs .oc-row .oc-value{font-weight:600;text-align:right}
+/* 页脚 */
+.result-footer{background:#f8fafc;border-radius:12px;padding:14px 16px;margin-top:14px;font-size:11px;color:var(--muted);line-height:1.8;text-align:center}
+.result-footer b{color:var(--text)}
+.result-footer .btn{width:auto;display:inline-flex;padding:6px 14px;font-size:11px;margin-top:4px}
+/* 开关 */
+.toggle-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0}
+.toggle-label{font-size:13px;color:#475569;font-weight:500}
+.toggle-switch{position:relative;width:48px;height:28px;flex-shrink:0}
+.toggle-switch input{opacity:0;width:0;height:0;position:absolute}
+.toggle-slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:#cbd5e1;border-radius:28px;transition:.2s}
+.toggle-slider:before{content:"";position:absolute;height:22px;width:22px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s}
+.toggle-switch input:checked+.toggle-slider{background:var(--primary)}
+.toggle-switch input:checked+.toggle-slider:before{transform:translateX(20px)}
+.fund-warning{font-size:11px;color:var(--muted);line-height:1.5;margin-top:4px}
+.sync-btn{background:var(--primary-soft);color:var(--primary);border:1px solid var(--primary);font-size:12px;padding:8px 12px;flex-shrink:0;white-space:nowrap;width:auto}
+.result-actions{display:flex;gap:10px;margin-top:16px}.result-actions .btn{flex:1}
+.result-card{background:linear-gradient(135deg,var(--primary),#047857);color:#fff;border-radius:16px;padding:20px;display:none}.result-card.show{display:block;animation:fadeIn .3s}
+.result-card h3{font-size:14px;opacity:.9;margin-bottom:12px}
+.result-item{display:flex;justify-content:space-between;align-items:baseline;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.15)}.result-item:last-child{border-bottom:none}
+.result-item .label{font-size:13px;opacity:.85}.result-item .value{font-size:18px;font-weight:800}
+.result-card .btn{width:auto}
+.step-indicator{display:flex;gap:4px;margin-bottom:20px}.step-dot{flex:1;height:4px;background:var(--line);border-radius:2px;transition:background .2s}.step-dot.active{background:var(--primary)}
+.step{display:none}.step.active{display:block;animation:fadeIn .2s}
+.step h3{font-size:15px;font-weight:700;margin-bottom:14px}.step-actions{display:flex;gap:10px;margin-top:20px}
+.perf-tabs{display:flex;gap:6px;margin-bottom:16px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px}
+.perf-tab{flex-shrink:0;padding:8px 14px;font-size:13px;border:1.5px solid var(--line);border-radius:20px;background:#fff;cursor:pointer;touch-action:manipulation;white-space:nowrap}.perf-tab.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.perf-box{display:none}.perf-box.active{display:block;animation:fadeIn .2s}
+dialog{position:fixed;inset:0;margin:auto;padding:24px;border:none;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.25);max-width:360px;width:90%;z-index:9999}
+dialog::backdrop{background:rgba(0,0,0,.4)}
+dialog h3{font-size:16px;margin-bottom:12px;color:var(--text)}dialog .actions{display:flex;gap:10px;margin-top:16px;justify-content:flex-end}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+/* 版本文案 */
+.version-footer{text-align:center;font-size:11px;color:var(--muted);padding:12px 0 4px;line-height:1.8}
+.version-footer b{color:var(--text)}
+@media(min-width:768px){
+  .page{max-width:960px}
+  .cost-layout{display:grid;grid-template-columns:42fr 58fr;gap:24px;align-items:start}
+  .result-desktop{position:sticky;top:80px;overflow-y:auto;max-height:calc(100vh - 100px)}
+  .result-desktop .kpi-grid{grid-template-columns:1fr 1fr}
+  #resultArea{display:none}
+}
+@media(max-width:767px){.result-desktop{display:none}}
+</style>
+</head>
+<body>
+
+<nav class="topbar" id="topbar">
+  <button class="back-btn" id="backBtn" style="display:none" onclick="goHome()">←</button>
+  <h1 id="pageTitle">企业用工成本工具箱</h1>
+</nav>
+
+<!-- 首页 -->
+<div class="page active" id="page-home">
+  <div class="hero">
+    <h2>企业用工成本工具箱</h2>
+    <p>快速测算用人成本 · 绩效提成 · 离职补偿</p>
+  </div>
+  <div class="cards">
+    <div class="card" onclick="navigateTo('cost')">
+      <div class="card-icon">💰</div>
+      <h3>用人成本计算</h3>
+      <p>支持正向计算与反向谈薪测算，快速了解税前工资、员工到手和企业真实预算。</p>
+    </div>
+    <div class="card" onclick="navigateTo('perf')">
+      <div class="card-icon">📊</div>
+      <h3>绩效与提成计算</h3>
+      <p>评分系数、销售阶梯提成、项目奖金，四种模板一键计算</p>
+    </div>
+    <div class="card" onclick="navigateTo('term')">
+      <div class="card-icon">📋</div>
+      <h3>离职成本测算</h3>
+      <p>依法测算经济补偿、赔偿金、未休年假等离职结算费用</p>
+    </div>
+  </div>
+  <div class="disclaimer">
+    企业用工成本估算器 · <b>V1.2</b>
+    <button class="btn btn-sm sync-btn" onclick="showPolicySource()" style="margin-left:8px">查看政策来源</button>
+    <br><span>测算结果仅供参考，正式申报请以当期政策为准。</span>
+    <br><span style="font-size:10px;opacity:.6">© c-with</span>
+  </div>
+</div>
+
+<!-- 用人成本页面 -->
+<div class="page" id="page-cost">
+  <!-- 模式切换 -->
+  <div class="mode-tabs">
+    <button class="mode-tab active" id="tabForward" onclick="switchCalcMode('forward')">已知税前工资，计算企业成本</button>
+    <button class="mode-tab" id="tabReverse" onclick="switchCalcMode('reverse')">已知员工到手，反推税前工资</button>
+  </div>
+
+  <div class="cost-layout">
+    <div>
+      <!-- ===== 正向测算表单 ===== -->
+      <div class="form-panel active" id="forwardForm">
+        <div class="field"><label>税前固定工资（元/月）</label><input id="salaryFixed" type="number" min="0" value="5000"></div>
+
+        <div class="field"><label>社保缴费工资（元/月）</label>
+          <input id="socialBase" type="number" min="0" value="2080">
+          <div class="quick-btns">
+            <button class="quick-btn min-trial" onclick="minTrialSocial()" type="button">按最低档试算</button>
+            <button class="quick-btn sync-gross" onclick="syncSocialBase()" type="button">同步税前工资</button>
+          </div>
+          <p class="hint-text">系统会根据社保缴费工资，分别套用各险种的缴费基数上下限。</p>
+          <p class="hint-text" style="color:#b45309">仅用于预算模拟，不代表所有企业均应按照最低基数申报。</p>
+        </div>
+
+        <div class="field">
+          <div class="toggle-row">
+            <span class="toggle-label">是否将住房公积金纳入测算</span>
+            <label class="toggle-switch"><input type="checkbox" id="fundToggle" onchange="toggleFund()"><span class="toggle-slider"></span></label>
+          </div>
+          <p class="fund-warning" id="fundWarning">暂不纳入测算仅用于预算估算，不代表企业依法可以免缴住房公积金。正式用工请结合企业实际情况及当地政策处理。</p>
+          <div id="fundBaseRow" style="display:none;margin-top:8px">
+            <label style="font-size:13px;color:#475569;font-weight:500;display:block;margin-bottom:4px">公积金缴费基数（元/月）</label>
+            <input id="fundBase" type="number" min="0" value="5000">
+          </div>
+        </div>
+
+        <div class="field"><label>员工人数</label><input id="employeeCount" type="number" min="1" step="1" value="1"></div>
+
+        <button class="advanced-toggle" id="advToggle" onclick="toggleAdvanced()">
+          <span class="arrow">▶</span> 展开高级设置
+        </button>
+        <div class="advanced-panel" id="advPanel">
+          <div class="section-title">薪酬与成本</div>
+          <div class="field"><label>绩效工资（元/月）</label><input id="salaryPerformance" type="number" min="0" value="0"></div>
+          <div class="field"><label>提成 / 奖金（元/月）</label><input id="salaryCommission" type="number" min="0" value="0"></div>
+          <div class="field"><label>津贴补贴（元/月）</label><input id="salaryAllowance" type="number" min="0" value="0"></div>
+          <div class="field"><label>福利成本（元/月）</label><input id="welfareCost" type="number" min="0" value="0"></div>
+          <div class="field"><label>招聘培训摊销（元/月）</label><input id="recruitCost" type="number" min="0" value="0"></div>
+          <div class="field"><label>设备工位摊销（元/月）</label><input id="equipmentCost" type="number" min="0" value="0"></div>
+          <div class="field"><label>其他公司成本（元/月）</label><input id="otherCompanyCost" type="number" min="0" value="0"></div>
+          <div class="section-title">分项基数与费率覆盖</div>
+          <p class="hint-text" style="margin-bottom:10px">留空时，按照社保缴费工资自动计算，并分别应用各险种的缴费基数上下限。</p>
+          <div class="field"><label>养老保险基数（元/月）</label><input id="penBaseOverride" type="number" min="0" placeholder="留空=自动（≥4,775）"></div>
+          <div class="field"><label>基本医疗保险（含生育）基数（元/月）</label><input id="medBaseOverride" type="number" min="0" placeholder="留空=自动（≥4,775）"></div>
+          <div class="field"><label>失业保险基数（元/月）</label><input id="unempBaseOverride" type="number" min="0" placeholder="留空=自动（≥2,080）"></div>
+          <div class="field"><label>工伤保险基数（元/月）</label><input id="injuryBaseOverride" type="number" min="0" placeholder="留空=自动（≥2,080）"></div>
+          <div class="field"><label>工伤保险费率 %</label><input id="injuryRateOverride" type="number" min="0" max="100" step="0.1" placeholder="留空=0.4%"><p class="hint-text">当前企业实缴样本默认值，工伤保险费率可能因行业类别及浮动费率不同而变化。</p></div>
+          <div class="field"><label>公积金基数（元/月）</label><input id="fundBaseOverride" type="number" min="0" placeholder="留空沿用公积金基数"></div>
+          <div class="field" id="fundRateRow" style="display:none">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div><label>公积金单位比例 %</label><input id="fundEmployerOverride" type="number" min="0" max="100" step="0.5" placeholder="留空=5%"></div>
+              <div><label>公积金个人比例 %</label><input id="fundEmployeeOverride" type="number" min="0" max="100" step="0.5" placeholder="留空=5%"></div>
+            </div>
+          </div>
+          <div class="field"><label>医保类型</label>
+            <select id="medicalTier">
+              <option value="tier1">统账结合职工医保（一档｜含个人医保账户）</option>
+              <option value="tier2">单建统筹职工医保（二档｜不设个人医保账户）</option>
+            </select>
+          </div>
+          <div class="field"><label>专项附加扣除（元/月）</label><input id="specialDeduction" type="number" min="0" value="0"></div>
+          <div class="section-title">年终奖</div>
+          <div class="field"><label>年终奖金额（元，可选）</label><input id="annualBonus" type="number" min="0" value="0" placeholder="填0或不填表示无"></div>
+          <div class="field"><label>累计预扣法参数（仅累计模式需填）</label>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div><label style="font-size:12px">本年已累计应纳税所得额</label><input id="accTaxable" type="number" min="0" value="0" placeholder="元"></div>
+              <div><label style="font-size:12px">本年已预扣税额</label><input id="accTaxPaid" type="number" min="0" value="0" placeholder="元"></div>
+            </div>
+          </div>
+          <div class="section-title">企业年金与工会费</div>
+          <div class="field">
+            <div class="toggle-row">
+              <span class="toggle-label">纳入企业年金</span>
+              <label class="toggle-switch"><input type="checkbox" id="annuityToggle" onchange="toggleAnnuity()"><span class="toggle-slider"></span></label>
+            </div>
+            <div id="annuityRow" style="display:none;margin-top:8px">
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                <div><label style="font-size:12px">企业缴纳比例 %</label><input id="annuityER" type="number" min="0" max="8" step="0.5" value="8"></div>
+                <div><label style="font-size:12px">个人缴纳比例 %</label><input id="annuityEE" type="number" min="0" max="4" step="0.5" value="2"></div>
+              </div>
+            </div>
+          </div>
+          <div class="field">
+            <div class="toggle-row">
+              <span class="toggle-label">纳入工会费</span>
+              <label class="toggle-switch"><input type="checkbox" id="unionToggle" onchange="toggleUnion()"><span class="toggle-slider"></span></label>
+            </div>
+            <div id="unionRow" style="display:none;margin-top:8px">
+              <label style="font-size:12px;color:#475569;font-weight:500;display:block;margin-bottom:4px">工会费比例 %（默认0.5%）</label>
+              <input id="unionRate" type="number" min="0" max="100" step="0.1" value="0.5" style="width:100%;padding:10px 12px;font-size:15px;border:1.5px solid var(--line);border-radius:10px">
+            </div>
+          </div>
+          <div class="field"><label>个税估算模式</label>
+            <select id="taxMode">
+              <option value="simple">快速估算（月度简化）</option>
+              <option value="cumulative">累计预扣法（推荐·更准确）</option>
+              <option value="none">不计算个税</option>
+            </select>
+            <p class="hint-text">累计预扣法需额外填写已累计应纳税额和已预扣税额</p>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" style="margin-top:20px" onclick="doForwardCalc()">开始计算</button>
+        <button class="btn btn-outline btn-sm" style="margin-top:10px" onclick="resetForwardDefaults()">恢复默认值</button>
+      </div>
+
+      <!-- ===== 反向测算表单 ===== -->
+      <div class="form-panel" id="reverseForm">
+        <div class="field"><label>员工期望到手工资（元/月）</label><input id="targetNet" type="number" min="0" value="5000"></div>
+
+        <div class="field"><label>到手工资口径</label>
+          <div class="radio-group" id="netScopeGroup">
+            <label class="radio-item selected" onclick="selectRadio(this,'netScopeGroup')">
+              <input type="radio" name="netScope" value="fixed" checked><div><div class="radio-label">固定工资预计到手</div><div class="radio-desc">仅按固定工资反向计算</div></div>
+            </label>
+            <label class="radio-item" onclick="selectRadio(this,'netScopeGroup')">
+              <input type="radio" name="netScope" value="average"><div><div class="radio-label">包含绩效后的平均到手</div><div class="radio-desc">将绩效等浮动词算入税前工资再进行反向计算</div></div>
+            </label>
+          </div>
+        </div>
+
+        <div class="field"><label>社保计算方式</label>
+          <div class="radio-group" id="socialModeGroup">
+            <label class="radio-item selected" onclick="selectRadio(this,'socialModeGroup')">
+              <input type="radio" name="socialMode" value="sync" checked><div><div class="radio-label">新员工：社保缴费工资同步反推税前工资</div><div class="radio-desc">推荐作为新员工谈薪参考</div></div>
+            </label>
+            <label class="radio-item" onclick="selectRadio(this,'socialModeGroup')">
+              <input type="radio" name="socialMode" value="min"><div><div class="radio-label">按当前企业最低档样本试算</div><div class="radio-desc">社保缴费工资固定为 2,080 元，用于内部预算比较</div></div>
+            </label>
+            <label class="radio-item" id="socialModeManual" onclick="selectRadio(this,'socialModeGroup')">
+              <input type="radio" name="socialMode" value="manual"><div><div class="radio-label">手动填写社保缴费工资</div><div class="radio-desc">自行填写社保缴费工资</div></div>
+            </label>
+          </div>
+          <div id="manualSocialRow" style="display:none;margin-top:8px">
+            <label style="font-size:13px;color:#475569;font-weight:500;display:block;margin-bottom:4px">社保缴费工资（元/月）</label>
+            <input id="manualSocialBase" type="number" min="0" value="5000">
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="toggle-row">
+            <span class="toggle-label">是否将住房公积金纳入测算</span>
+            <label class="toggle-switch"><input type="checkbox" id="fundToggleR" onchange="toggleFundR()"><span class="toggle-slider"></span></label>
+          </div>
+          <p class="fund-warning" id="fundWarningR">暂不纳入测算仅用于预算估算，不代表企业依法可以免缴住房公积金。正式用工请结合企业实际情况及当地政策处理。</p>
+          <div id="fundBaseRowR" style="display:none;margin-top:8px">
+            <label style="font-size:13px;color:#475569;font-weight:500;display:block;margin-bottom:4px">公积金缴费基数（元/月）</label>
+            <input id="fundBaseR" type="number" min="0" value="5000">
+          </div>
+        </div>
+
+        <button class="advanced-toggle" id="advToggleR" onclick="toggleAdvancedR()">
+          <span class="arrow">▶</span> 展开高级设置
+        </button>
+        <div class="advanced-panel" id="advPanelR">
+          <div class="section-title">高级设置</div>
+          <div class="field"><label>绩效工资（元/月）</label><input id="rSalaryPerformance" type="number" min="0" value="0"></div>
+          <div class="field"><label>提成 / 奖金（元/月）</label><input id="rSalaryCommission" type="number" min="0" value="0"></div>
+          <div class="field"><label>津贴补贴（元/月）</label><input id="rSalaryAllowance" type="number" min="0" value="0"></div>
+          <div class="field"><label>福利成本（元/月）</label><input id="rWelfareCost" type="number" min="0" value="0"></div>
+          <div class="field"><label>招聘培训摊销（元/月）</label><input id="rRecruitCost" type="number" min="0" value="0"></div>
+          <div class="field"><label>设备工位摊销（元/月）</label><input id="rEquipmentCost" type="number" min="0" value="0"></div>
+          <div class="field"><label>其他公司成本（元/月）</label><input id="rOtherCompanyCost" type="number" min="0" value="0"></div>
+          <div class="field"><label>专项附加扣除（元/月）</label><input id="rSpecialDeduction" type="number" min="0" value="0"></div>
+          <div class="field"><label>个税估算模式</label>
+            <select id="rTaxMode">
+              <option value="simple">快速估算（月度简化）</option>
+              <option value="cumulative">累计预扣法（推荐·更准确）</option>
+              <option value="none">不计算个税</option>
+            </select>
+          </div>
+          <div class="field"><label>员工人数</label><input id="rEmployeeCount" type="number" min="1" step="1" value="1"></div>
+          <div class="field"><label>工伤保险费率 %</label><input id="rInjuryRate" type="number" min="0" max="100" step="0.1" placeholder="留空=0.4%"></div>
+        </div>
+
+        <button class="btn btn-primary" style="margin-top:20px" onclick="doReverseCalc()">开始反向测算</button>
+        <button class="btn btn-outline btn-sm" style="margin-top:10px" onclick="resetReverseDefaults()">恢复默认值</button>
+      </div>
+    </div>
+
+    <!-- 桌面端结果 -->
+    <div class="result-desktop" id="resultDesktop"></div>
+  </div>
+
+  <!-- 手机端结果 -->
+  <div class="result-area" id="resultArea"></div>
+</div>
+
+<!-- 绩效计算页面 -->
+<div class="page" id="page-perf">
+  <div class="perf-tabs">
+    <div class="perf-tab active" onclick="switchPerf('score')">评分系数</div>
+    <div class="perf-tab" onclick="switchPerf('sales')">销售提成</div>
+    <div class="perf-tab" onclick="switchPerf('project')">项目奖金</div>
+    <div class="perf-tab" onclick="switchPerf('custom')">手动填写</div>
+  </div>
+  <div class="perf-box active" id="perfScore">
+    <div class="field"><label>绩效基数（元）</label><input id="perfBase" type="number" min="0" value="6000"></div>
+    <div class="field"><label>得分（0-120）</label><input id="perfScoreVal" type="number" min="0" max="120" value="85"></div>
+    <p style="font-size:12px;color:var(--muted);margin:8px 0 14px">≥100分×1.3 · ≥90分×1.1 · ≥80分×1.0 · ≥60分×0.8 · ＜60分×0.5</p>
+  </div>
+  <div class="perf-box" id="perfSales">
+    <div class="field"><label>销售额 / 回款额（元）</label><input id="salesRevenue" type="number" min="0" value="100000"></div>
+    <div class="field"><label>计算方式</label><select id="salesType"><option value="ladder">阶梯累进</option><option value="jump">跳档</option></select></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="field"><label>一档上限（元）</label><input id="salesTier1Limit" type="number" min="0" value="50000"></div>
+      <div class="field"><label>一档比例 %</label><input id="salesTier1Rate" type="number" min="0" max="100" value="3"></div>
+      <div class="field"><label>二档上限（元）</label><input id="salesTier2Limit" type="number" min="0" value="100000"></div>
+      <div class="field"><label>二档比例 %</label><input id="salesTier2Rate" type="number" min="0" max="100" value="5"></div>
+    </div>
+    <div class="field"><label>三档比例 %</label><input id="salesTier3Rate" type="number" min="0" max="100" value="8"></div>
+  </div>
+  <div class="perf-box" id="perfProject">
+    <div class="field"><label>项目毛利（元）</label><input id="projectGrossProfit" type="number" min="0" value="200000"></div>
+    <div class="field"><label>奖金池提取比例 %</label><input id="projectPoolRate" type="number" min="0" max="100" value="10"></div>
+    <div class="field"><label>个人权重 %</label><input id="projectWeight" type="number" min="0" max="100" value="50"></div>
+    <div class="field"><label>质量系数 %</label><input id="projectQuality" type="number" min="0" max="100" value="100"></div>
+    <div class="field"><label>回款完成率 %</label><input id="projectCollection" type="number" min="0" max="100" value="100"></div>
+  </div>
+  <div class="perf-box" id="perfCustom">
+    <div class="field"><label>绩效金额（元）</label><input id="customPerf" type="number" min="0" value="2000"></div>
+  </div>
+  <button class="btn btn-primary" style="margin-top:20px;width:100%" onclick="doPerfCalc()">计算绩效</button>
+  <div class="result-card" id="perfResult" style="margin-top:16px">
+    <h3>计算结果</h3>
+    <div class="result-item"><span class="label">绩效金额</span><span class="value" id="perfValue">¥0</span></div>
+    <p id="perfDetail" style="font-size:12px;color:rgba(255,255,255,.85);margin-top:10px"></p>
+    <button class="btn btn-outline btn-sm" style="margin-top:14px;width:100%" onclick="applyPerf()">带入用人成本计算</button>
+    <button class="btn btn-outline btn-sm" style="margin-top:8px;width:100%" onclick="savePerfResult()">复制结果</button>
+  </div>
+</div>
+
+<!-- 离职成本页面 -->
+<div class="page" id="page-term">
+  <div class="step-indicator" id="stepIndicator">
+    <div class="step-dot active"></div><div class="step-dot"></div><div class="step-dot"></div><div class="step-dot"></div><div class="step-dot"></div>
+  </div>
+  <div class="step active" id="termStep1">
+    <h3>① 选择解除场景</h3>
+    <div class="field"><label>解除类型</label><select id="termScenario" onchange="onScenarioChange()">
+      <option value="mutual">协商一致解除</option>
+      <option value="contract_end">合同到期不续签（单位不续签或降低条件）</option>
+      <option value="article40">非过失性解除（N+1）</option>
+      <option value="illegal">违法解除（风险 2N）</option>
+      <option value="voluntary">员工主动辞职</option>
+      <option value="misconduct">严重违纪等情形</option>
+      <option value="layoff">经济性裁员</option>
+    </select>
+    </div>
+    <div class="field" id="noNoticeRow" style="margin-top:10px;display:none">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+        <input type="checkbox" id="noNotice30"> 未提前30日书面通知（产生代通知金）
+      </label>
+    </div>
+    <div class="field" id="noContractRow" style="margin-top:10px;display:none">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+        <input type="checkbox" id="noWrittenContract"> 入职满1个月未签书面劳动合同
+      </label>
+    </div>
+    <div class="step-actions"><button class="btn btn-primary" onclick="nextStep(2)">下一步</button></div>
+  </div>
+  <div class="step" id="termStep2">
+    <h3>② 填写工作年限与工资</h3>
+    <div class="field">
+      <label>工龄输入方式</label>
+      <div class="mode-tabs" style="margin-bottom:12px">
+        <button class="mode-tab active" id="tenorDateTab" onclick="switchTenorMode('date')">按日期自动计算</button>
+        <button class="mode-tab" id="tenorManualTab" onclick="switchTenorMode('manual')">手动输入月数</button>
+      </div>
+    </div>
+    <div id="tenorDateMode">
+      <div class="field"><label>入职日期</label><input id="termStart" type="date"></div>
+      <div class="field"><label>离职日期</label><input id="termEnd" type="date"></div>
+    </div>
+    <div id="tenorManualMode" style="display:none">
+      <div class="field"><label>工作总月数</label><input id="termManualMonths" type="number" min="0" step="1" value="12"><p class="hint-text">满12个月算1年，满6个月不满1年算1年，不满6个月算0.5年</p></div>
+    </div>
+    <div class="field"><label>离职前12个月平均工资（元/月）</label><input id="termAvgWage" type="number" min="0" value="6000"></div>
+    <div class="field"><label>上个月工资（用于代通知金）</label><input id="termLastWage" type="number" min="0" value="6000"></div>
+    <div class="step-actions"><button class="btn btn-outline" onclick="nextStep(1)">上一步</button><button class="btn btn-primary" onclick="nextStep(3)">下一步</button></div>
+  </div>
+  <div class="step" id="termStep3">
+    <h3>③ 填写未结算费用</h3>
+    <div class="field"><label>未发工资（元）</label><input id="termUnpaidSalary" type="number" min="0" value="0"></div>
+    <div class="field"><label>未发绩效（元）</label><input id="termUnpaidPerf" type="number" min="0" value="0"></div>
+    <div class="field"><label>未发提成（元）</label><input id="termUnpaidCommission" type="number" min="0" value="0"></div>
+    <div class="field"><label>未休年假天数</label><input id="termAnnualDays" type="number" min="0" value="0"></div>
+    <div class="field"><label>报销未结（元）</label><input id="termReimburse" type="number" min="0" value="0"></div>
+    <div class="field"><label>其他结算（元）</label><input id="termOther" type="number" min="0" value="0"></div>
+    <div class="step-actions"><button class="btn btn-outline" onclick="nextStep(2)">上一步</button><button class="btn btn-primary" onclick="termStep3Next()">下一步</button></div>
+  </div>
+  <div class="step" id="termStep4">
+    <h3>④ 高风险事项（可选）</h3>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" value="无固定期限"> 应签未签无固定期限合同</label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" value="三期女职工"> 三期女职工</label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" value="医疗期"> 医疗期内</label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" value="工伤"> 工伤未认定或认定后</label>
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer"><input type="checkbox" value="竞业限制"> 竞业限制未处理</label>
+    </div>
+    <div class="step-actions"><button class="btn btn-outline" onclick="nextStep(3)">上一步</button><button class="btn btn-primary" onclick="doTermCalc()">查看测算结果</button></div>
+  </div>
+  <div class="step" id="termStep5">
+    <h3>⑤ 测算结果</h3>
+    <div class="result-card show">
+      <div class="result-item"><span class="label">工作年限</span><span class="value" id="tN">0N</span></div>
+      <div class="result-item" id="tBaseRow" style="display:none"><span class="label" style="font-size:12px;opacity:.7">补偿基数</span><span class="value" id="tBase" style="font-size:13px;opacity:.7">¥0</span></div>
+      <div class="result-item"><span class="label">经济补偿/赔偿</span><span class="value" id="tComp">¥0</span></div>
+      <div class="result-item"><span class="label" id="tPlusOneLabel" style="display:none">代通知金 +1</span><span class="value" id="tPlusOne" style="display:none">¥0</span></div>
+      <div class="result-item"><span class="label" id="tUncontractLabel" style="display:none">未签合同二倍工资差额</span><span class="value" id="tUncontract" style="display:none">¥0</span></div>
+      <div class="result-item"><span class="label">其他结算</span><span class="value" id="tSettle">¥0</span></div>
+      <div class="result-item" style="border-top:1px solid rgba(255,255,255,.3);padding-top:10px"><span class="label">预计总成本</span><span class="value" id="tTotal">¥0</span></div>
+      <div class="result-item" id="tRangeRow" style="display:none"><span class="label">浮动范围（±8%）</span><span class="value" id="tRange" style="font-size:14px">¥0 ~ ¥0</span></div>
+      <div id="tRules" style="font-size:11px;margin-top:12px;padding-top:10px;border-top:1px solid rgba(255,255,255,.15);line-height:1.8;max-height:200px;overflow-y:auto"></div>
+      <p id="tRisk" style="font-size:12px;margin-top:10px;color:#fbbf24"></p>
+    </div>
+    <div class="step-actions" style="margin-top:16px"><button class="btn btn-outline" onclick="nextStep(4)">上一步</button><button class="btn btn-primary" onclick="saveTermResult()">复制结果</button></div>
+  </div>
+</div>
+
+<dialog id="dialog">
+  <h3 id="dialogTitle"></h3>
+  <div id="dialogBody" style="font-size:14px;color:#536174;white-space:pre-wrap;max-height:50vh;overflow-y:auto"></div>
+  <div class="actions"><button class="btn btn-primary btn-sm" onclick="closeDialog()">知道了</button></div>
+</dialog>
+
+<nav class="bottom-nav" id="bottomNav">
+  <button class="nav-item active" data-page="home" onclick="navigateTo('home')"><span class="nav-icon">🏠</span>首页</button>
+  <button class="nav-item" data-page="cost" onclick="navigateTo('cost')"><span class="nav-icon">💰</span>用人成本</button>
+  <button class="nav-item" data-page="perf" onclick="navigateTo('perf')"><span class="nav-icon">📊</span>绩效计算</button>
+  <button class="nav-item" data-page="term" onclick="navigateTo('term')"><span class="nav-icon">📋</span>离职成本</button>
+</nav>
+
+<script>
+/* ========== 工具函数 ========== */
+const $=id=>document.getElementById(id);
+const n=id=>{const v=Number($(id).value);return isNaN(v)?0:Math.max(0,v)};
+const fmt=v=>(Number(v)||0).toLocaleString('zh-CN',{minimumFractionDigits:2,maximumFractionDigits:2});
+const clamp=(x,min,max)=>Math.min(Math.max(x,min),max);
+const round2=v=>Math.round(v*100)/100;
+const rateStr=r=>(Number(r)%1===0?Math.round(r):Number(r).toFixed(1))+'%';
+const moneyCell=v=>v!==null&&v!==undefined?'¥'+fmt(v):'—';
+
+/* ========== 政策参数 ========== */
+const DEFAULT_SETTINGS={
+  version:'V1.2',minimumWage:2080,localAvgSalary:8500,lastVerified:'2026-05',
+  pensionMin:4775,pensionMax:27549,pensionEmployer:16,pensionEmployee:8,
+  medicalMin:4775,medicalMax:27549,medicalEmployer:6,medicalEmployee:1.5,medicalTier2Employer:3,medicalTier2Employee:0,
+  unemploymentMin:2080,unemploymentMax:27549,unemploymentEmployer:0.8,unemploymentEmployee:0.2,
+  injuryMin:2080,injuryMax:27549,injuryEmployer:0.4,
+  fundMin:2080,fundMax:34926,fundEmployer:5,fundEmployee:5
+};
+const STORAGE_KEY='human_cost_settings_v12', HISTORY_KEY='human_cost_history_v12';
+let settings=loadSettings();
+let calcMode='forward';
+let fundEnabled=false;
+let fundEnabledR=false;
+let socialBaseManuallySet=false;
+
+function loadSettings(){
+  try{return {...DEFAULT_SETTINGS,...JSON.parse(localStorage.getItem(STORAGE_KEY)||'{}')}}
+  catch(e){return {...DEFAULT_SETTINGS}}
+}
+
+/* ========== 导航 ========== */
+const pageTitles={home:'企业用工成本工具箱',cost:'用人成本计算',perf:'绩效与提成',term:'离职成本测算'};
+function navigateTo(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  $('page-'+page).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.page===page));
+  $('pageTitle').textContent=pageTitles[page]||'';
+  $('backBtn').style.display=page==='home'?'none':'flex';
+  if(page==='term')nextStep(1);
+  currentPage=page;
+  track('page_view',page,TRACK_VID);
+}
+function goHome(){navigateTo('home')}
+
+/* ========== 模式切换 ========== */
+function switchCalcMode(mode){
+  calcMode=mode;
+  $('tabForward').classList.toggle('active',mode==='forward');
+  $('tabReverse').classList.toggle('active',mode==='reverse');
+  $('forwardForm').classList.toggle('active',mode==='forward');
+  $('reverseForm').classList.toggle('active',mode==='reverse');
+  // 清除结果
+  $('resultDesktop').innerHTML='';$('resultDesktop').classList.remove('show');
+  $('resultArea').innerHTML='';$('resultArea').classList.remove('show');
+}
+
+/* ========== Radio选择 ========== */
+function selectRadio(el,groupId){
+  document.querySelectorAll('#'+groupId+' .radio-item').forEach(r=>r.classList.remove('selected'));
+  el.classList.add('selected');
+  el.querySelector('input[type="radio"]').checked=true;
+  // 手动填写社保显示/隐藏
+  if(groupId==='socialModeGroup'){
+    const mode=el.querySelector('input').value;
+    $('manualSocialRow').style.display=mode==='manual'?'block':'none';
+  }
+}
+
+/* ========== 高级设置折叠 ========== */
+function toggleAdvanced(){
+  const panel=$('advPanel'),btn=$('advToggle');
+  panel.classList.toggle('open');btn.classList.toggle('open');
+  btn.innerHTML=panel.classList.contains('open')?'<span class="arrow">▶</span> 收起高级设置':'<span class="arrow">▶</span> 展开高级设置';
+}
+function toggleAdvancedR(){
+  const panel=$('advPanelR'),btn=$('advToggleR');
+  panel.classList.toggle('open');btn.classList.toggle('open');
+  btn.innerHTML=panel.classList.contains('open')?'<span class="arrow">▶</span> 收起高级设置':'<span class="arrow">▶</span> 展开高级设置';
+}
+
+/* ========== 正向测算 ========== */
+function minTrialSocial(){
+  $('socialBase').value='2080';
+  socialBaseManuallySet=true;
+  doForwardCalc();
+}
+function syncSocialBase(){
+  const salaryFixed=n('salaryFixed');
+  if(salaryFixed>0){
+    $('socialBase').value=salaryFixed;
+    socialBaseManuallySet=false;
+    if(fundEnabled)$('fundBase').value=salaryFixed;
+    doForwardCalc();
+  }else{showDialog('提示','请先填写税前固定工资。')}
+}
+
+function resetForwardDefaults(){
+  $('salaryFixed').value='5000';
+  $('socialBase').value='2080';
+  socialBaseManuallySet=false;
+  fundEnabled=false;$('fundToggle').checked=false;
+  $('fundBaseRow').style.display='none';$('fundWarning').style.display='block';
+  $('fundRateRow').style.display='none';$('fundBase').value='0';
+  $('employeeCount').value='1';
+  $('salaryPerformance').value='0';$('salaryCommission').value='0';$('salaryAllowance').value='0';
+  $('welfareCost').value='0';$('recruitCost').value='0';$('equipmentCost').value='0';$('otherCompanyCost').value='0';
+  $('penBaseOverride').value='';$('medBaseOverride').value='';$('unempBaseOverride').value='';$('injuryBaseOverride').value='';
+  $('injuryRateOverride').value='';$('fundBaseOverride').value='';$('fundEmployerOverride').value='';$('fundEmployeeOverride').value='';
+  $('specialDeduction').value='0';$('taxMode').value='simple';$('medicalTier').value='tier1';
+  $('annualBonus').value='0';$('accTaxable').value='0';$('accTaxPaid').value='0';
+  annuityEnabled=false;$('annuityToggle').checked=false;$('annuityRow').style.display='none';
+  unionEnabled=false;$('unionToggle').checked=false;$('unionRow').style.display='none';
+  $('advPanel').classList.remove('open');$('advToggle').classList.remove('open');
+  $('advToggle').innerHTML='<span class="arrow">▶</span> 展开高级设置';
+  doForwardCalc();
+}
+
+/* ========== 核心：社保公积金计算 ========== */
+function calcSocial(declaredWage, fundEnabledFlag, fundBaseInput, ov){
+  // ov: override getter function
+  const penBase=clamp(ov('penBaseOverride')??Math.max(declaredWage,settings.pensionMin),settings.pensionMin,settings.pensionMax);
+  const medBase=clamp(ov('medBaseOverride')??Math.max(declaredWage,settings.medicalMin),settings.medicalMin,settings.medicalMax);
+  const unempBase=clamp(ov('unempBaseOverride')??Math.max(declaredWage,settings.unemploymentMin),settings.unemploymentMin,settings.unemploymentMax);
+  const injuryBase=clamp(ov('injuryBaseOverride')??Math.max(declaredWage,settings.injuryMin),settings.injuryMin,settings.injuryMax);
+  const injuryRateER=ov('injuryRateOverride')??settings.injuryEmployer;
+  const isTier2=$('medicalTier')?.value==='tier2';
+  const medER=isTier2?settings.medicalTier2Employer:settings.medicalEmployer;
+  const medEE=isTier2?settings.medicalTier2Employee:settings.medicalEmployee;
+
+  let fBase=0, fundRateER=0, fundRateEE=0;
+  if(fundEnabledFlag){
+    const fundInput=ov('fundBaseOverride')??fundBaseInput;
+    fBase=clamp(fundInput,settings.fundMin,settings.fundMax);
+    fundRateER=ov('fundEmployerOverride')??settings.fundEmployer;
+    fundRateEE=ov('fundEmployeeOverride')??settings.fundEmployee;
+  }
+
+  const items=[
+    {label:'基本养老保险', base:penBase, rateER:settings.pensionEmployer, rateEE:settings.pensionEmployee, baseDesc:'基数 ¥'+fmt(penBase)+'（下限 ¥'+fmt(settings.pensionMin)+'）'},
+    {label:isTier2?'基本医疗保险（二档·单建统筹）':'基本医疗保险（含生育）', base:medBase, rateER:medER, rateEE:medEE, baseDesc:'基数 ¥'+fmt(medBase)+'（下限 ¥'+fmt(settings.medicalMin)+'）'},
+    {label:'失业保险', base:unempBase, rateER:settings.unemploymentEmployer, rateEE:settings.unemploymentEmployee, baseDesc:'基数 ¥'+fmt(unempBase)+'（下限 ¥'+fmt(settings.unemploymentMin)+'）'},
+    {label:'工伤保险', base:injuryBase, rateER:injuryRateER, rateEE:0, baseDesc:'基数 ¥'+fmt(injuryBase)+'（下限 ¥'+fmt(settings.injuryMin)+'）· 费率 '+Number(injuryRateER).toFixed(1)+'%'},
+    {label:'住房公积金', base:fBase, rateER:fundRateER, rateEE:fundRateEE, baseDesc:fundEnabledFlag?('基数 ¥'+fmt(fBase)):'暂未纳入测算'}
+  ];
+  items.forEach(it=>{it.er=round2(it.base*it.rateER/100);it.ee=round2(it.base*it.rateEE/100)});
+  const erTotal=round2(items.reduce((s,it)=>s+it.er,0));
+  const eeTotal=round2(items.reduce((s,it)=>s+it.ee,0));
+  return {items,erTotal,eeTotal,fundEnabled:fundEnabledFlag};
+}
+
+/* ========== 个税计算 ========== */
+// 月度简化税率表
+const MONTHLY_TAX_BRACKETS=[
+  {limit:3000,rate:0.03,ded:0},{limit:12000,rate:0.10,ded:210},
+  {limit:25000,rate:0.20,ded:1410},{limit:35000,rate:0.25,ded:2660},
+  {limit:55000,rate:0.30,ded:4410},{limit:80000,rate:0.35,ded:7160},
+  {limit:Infinity,rate:0.45,ded:15160}
+];
+// 累计预扣年度税率表
+const ANNUAL_TAX_BRACKETS=[
+  {limit:36000,rate:0.03,ded:0},{limit:144000,rate:0.10,ded:2520},
+  {limit:300000,rate:0.20,ded:16920},{limit:420000,rate:0.25,ded:31920},
+  {limit:660000,rate:0.30,ded:52920},{limit:960000,rate:0.35,ded:85920},
+  {limit:Infinity,rate:0.45,ded:181920}
+];
+// 年终奖单独计税率表（月度换算）
+const BONUS_TAX_BRACKETS=[
+  {limit:3000,rate:0.03,ded:0},{limit:12000,rate:0.10,ded:210},
+  {limit:25000,rate:0.20,ded:1410},{limit:35000,rate:0.25,ded:2660},
+  {limit:55000,rate:0.30,ded:4410},{limit:80000,rate:0.35,ded:7160},
+  {limit:Infinity,rate:0.45,ded:15160}
+];
+
+function calcTax(gross, eeTotal, specialDeduction, taxMode, extra){
+  extra=extra||{};
+  if(taxMode==='none')return {tax:0,taxable:0,mode:'none'};
+  const monthlyTaxable=Math.max(0,gross-eeTotal-specialDeduction-5000);
+  if(monthlyTaxable<=0)return {tax:0,taxable:0,mode:taxMode};
+
+  if(taxMode==='cumulative'){
+    const accBefore=Number(extra.accumulatedTaxable)||0;
+    const taxPaidBefore=Number(extra.accumulatedTaxPaid)||0;
+    const accTaxable=accBefore+monthlyTaxable;
+    let rate=0.45,ded=181920;
+    for(const b of ANNUAL_TAX_BRACKETS){if(accTaxable<=b.limit){rate=b.rate;ded=b.ded;break}}
+    const accTax=Math.max(0,accTaxable*rate-ded);
+    const monthTax=Math.max(0,accTax-taxPaidBefore);
+    return {tax:round2(monthTax),taxable:monthlyTaxable,mode:'cumulative',
+      accTaxable:round2(accTaxable),accRate:rate,accTax:round2(accTax),taxPaidBefore:round2(taxPaidBefore)};
+  }
+  // simple（月度简化）
+  let rate=0.45,ded=15160;
+  for(const b of MONTHLY_TAX_BRACKETS){if(monthlyTaxable<=b.limit){rate=b.rate;ded=b.ded;break}}
+  const tax=Math.max(0,monthlyTaxable*rate-ded);
+  return {tax:round2(tax),taxable:monthlyTaxable,mode:'simple',mRate:rate};
+}
+
+// 年终奖单独计税
+function calcBonusTax(bonus){
+  if(bonus<=0)return {tax:0,net:0};
+  const monthlyAvg=bonus/12;
+  let rate=0.45,ded=15160;
+  for(const b of BONUS_TAX_BRACKETS){if(monthlyAvg<=b.limit){rate=b.rate;ded=b.ded;break}}
+  const tax=Math.max(0,bonus*rate-ded);
+  return {tax:round2(tax),net:round2(bonus-tax),rate};
+}
+
+/* ========== 正向测算执行 ========== */
+function doForwardCalc(){
+  const salaryFixed=n('salaryFixed');
+  const perf=n('salaryPerformance')+n('salaryCommission')+n('salaryAllowance');
+  const gross=salaryFixed+perf;
+  const declaredWage=n('socialBase');
+  const count=Math.max(1,n('employeeCount'));
+  const ov=(id)=>$(id).value!==''?n(id):null;
+  const taxMode=$('taxMode').value;
+
+  const social=calcSocial(declaredWage, fundEnabled, n('fundBase'), ov);
+
+  // 企业年金
+  let annuityER=0,annuityEE=0;
+  if(annuityEnabled){
+    const base=declaredWage;
+    annuityER=round2(base*n('annuityER')/100);
+    annuityEE=round2(base*n('annuityEE')/100);
+  }
+  // 工会费
+  let unionFee=0;
+  if(unionEnabled){
+    unionFee=round2(gross*n('unionRate')/100);
+  }
+
+  // 个税
+  const taxExtra=taxMode==='cumulative'?{accumulatedTaxable:n('accTaxable'),accumulatedTaxPaid:n('accTaxPaid')}:{};
+  const taxResult=calcTax(gross, social.eeTotal+annuityEE, n('specialDeduction'), taxMode, taxExtra);
+
+  // 年终奖单独计税
+  const bonus=n('annualBonus');
+  const bonusResult=bonus>0?calcBonusTax(bonus):{tax:0,net:0,rate:0};
+
+  const net=round2(gross-social.eeTotal-annuityEE-taxResult.tax);
+  const legalCost=round2(gross+social.erTotal+annuityER+unionFee);
+
+  const extras=n('welfareCost')+n('recruitCost')+n('equipmentCost')+n('otherCompanyCost');
+  const compositeCost=round2(legalCost+extras);
+  const month=round2(compositeCost*count);
+  const year=round2(month*12);
+  const legalRatio=gross?round2(legalCost/gross):0;
+
+  // 正向结果渲染
+  renderForwardResult({salaryFixed,perf,gross,declaredWage,count,social,taxResult,net,legalCost,extras,compositeCost,month,year,legalRatio,annuityER,annuityEE,unionFee,bonus,bonusResult});
+  track('feature','cost_calc',salaryFixed);
+  track('calc','salary',salaryFixed);
+}
+
+function renderForwardResult(r){
+  const {salaryFixed,perf,gross,declaredWage,count,social,taxResult,net,legalCost,extras,compositeCost,month,year,legalRatio,annuityER,annuityEE,unionFee,bonus,bonusResult}=r;
+  const otherItems=[
+    {label:'绩效奖金', value:n('salaryPerformance')},
+    {label:'提成奖金', value:n('salaryCommission')},
+    {label:'津贴补贴', value:n('salaryAllowance')},
+    {label:'福利成本', value:n('welfareCost')},
+    {label:'招聘培训摊销', value:n('recruitCost')},
+    {label:'设备工位摊销', value:n('equipmentCost')},
+    {label:'其他公司成本', value:n('otherCompanyCost')}
+  ];
+  const otherTotal=otherItems.reduce((s,it)=>s+it.value,0);
+  const hasOther=otherTotal>0;
+
+  // 明细表格
+  let rows='';
+  rows+=`<tr><td><span class="item-name">税前工资发放</span><span class="rate-info">固定工资 ¥${fmt(salaryFixed)} + 绩效/提成/津贴 ¥${fmt(perf)}</span></td><td>${moneyCell(gross)}</td><td>—</td></tr>`;
+  social.items.forEach(it=>{
+    if(it.base===0&&it.rateER===0&&it.rateEE===0){
+      rows+=`<tr><td><span class="item-name">${it.label}</span><span class="rate-info" style="color:var(--warn)">暂未纳入测算</span></td><td>—</td><td>—</td></tr>`;
+    }else{
+      rows+=`<tr><td><span class="item-name">${it.label}</span><span class="rate-info">${it.baseDesc} · 单位 ${rateStr(it.rateER)} · 个人 ${rateStr(it.rateEE)}</span></td><td>${moneyCell(it.er)}</td><td>${moneyCell(it.ee)}</td></tr>`;
+    }
+  });
+  rows+=`<tr class="subtotal"><td>社保及公积金合计</td><td>${moneyCell(social.erTotal)}</td><td>${moneyCell(social.eeTotal)}</td></tr>`;
+  if(annuityER>0||annuityEE>0){
+    rows+=`<tr><td><span class="item-name">企业年金</span><span class="rate-info">单位 ${rateStr(n('annuityER'))} · 个人 ${rateStr(n('annuityEE'))} · 基数 ¥${fmt(declaredWage)}</span></td><td>${moneyCell(annuityER)}</td><td>${moneyCell(annuityEE)}</td></tr>`;
+  }
+  if(unionFee>0){
+    rows+=`<tr><td><span class="item-name">工会费</span><span class="rate-info">费率 ${rateStr(n('unionRate'))} · 基数 ¥${fmt(gross)}</span></td><td>${moneyCell(unionFee)}</td><td>—</td></tr>`;
+  }
+  rows+=`<tr><td><span class="item-name">个人所得税</span><span class="rate-info">${taxResult.mode==='cumulative'?'累计预扣法':'月度简化估算'} · 应税所得 ¥${fmt(taxResult.taxable)}${taxResult.mode==='cumulative'?'<br>累计应纳税所得额 ¥'+fmt(taxResult.accTaxable)+' · 税率 '+(taxResult.accRate*100)+'% · 已预扣 ¥'+fmt(taxResult.taxPaidBefore):''}<br><span style="color:var(--muted)">社保缴费工资仅用于计算社保费用，不等同于个人所得税计税工资。</span></span></td><td>—</td><td>${moneyCell(taxResult.tax)}</td></tr>`;
+  rows+=`<tr class="settlement"><td>最终实际结算</td><td>${moneyCell(legalCost)}</td><td>${moneyCell(net)}</td></tr>`;
+  if(bonus>0){
+    rows+=`<tr><td><span class="item-name">年终奖（单独计税）</span><span class="rate-info">金额 ¥${fmt(bonus)} · 适用税率 ${(bonusResult.rate*100)}% · 应纳税额 ¥${fmt(bonusResult.tax)} · 税后 ¥${fmt(bonusResult.net)}</span></td><td>—</td><td>${moneyCell(bonusResult.tax)}</td></tr>`;
+  }
+
+  const tableHTML=`<table class="detail-table"><thead><tr><th>资金去向</th><th>公司支出</th><th>员工扣除</th></tr></thead><tbody>${rows}</tbody></table>`;
+
+  // 其他成本
+  let ocHTML='';
+  if(hasOther){
+    const ocRows=otherItems.filter(it=>it.value>0).map(it=>`<div class="oc-row"><span class="oc-label">${it.label}</span><span class="oc-value">¥${fmt(it.value)}</span></div>`).join('');
+    ocHTML=`<div class="other-costs"><h3>📦 其他企业用人成本</h3>${ocRows}</div>`;
+  }
+
+  // 综合预算
+  let compHTML='';
+  if(hasOther){
+    compHTML=`<div class="composite-budget"><h3>📊 企业综合预算</h3>
+      <div class="cb-row"><span class="cb-label">法定用工成本（单人/月）</span><span class="cb-value">¥${fmt(legalCost)}</span></div>
+      <div class="cb-row"><span class="cb-label">其他企业成本（单人/月）</span><span class="cb-value">¥${fmt(otherTotal)}</span></div>
+      <div class="cb-total"><span>企业每月综合预算</span><span>= ¥${fmt(legalCost)} + ¥${fmt(otherTotal)} = ¥${fmt(compositeCost)}</span></div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">× ${count} 人 = 月度 ¥${fmt(month)} · 年度 ¥${fmt(year)}</div></div>`;
+  }
+
+  const footerHTML=`<div class="result-footer">
+    企业用工成本估算器 · <b>V1.2</b>
+    <button class="btn btn-sm sync-btn" onclick="showPolicySource()" style="margin-left:8px">查看政策来源</button>
+    <br><span>测算结果仅供参考，正式申报请以当期政策为准。</span>
+    <br><span style="font-size:10px;opacity:.6">© c-with</span></div>`;
+
+  const html=`<div class="kpi-grid">
+    <div class="kpi-card dark"><div class="kpi-label">公司每月法定成本</div><div class="kpi-value">¥${fmt(month)}</div></div>
+    <div class="kpi-card light"><div class="kpi-label">公司全年法定预算</div><div class="kpi-value">¥${fmt(year)}</div></div>
+    <div class="kpi-card dark"><div class="kpi-label">员工预计到手</div><div class="kpi-value">¥${fmt(net)}</div></div>
+    <div class="kpi-card light"><div class="kpi-label">法定成本系数</div><div class="kpi-value">${legalRatio.toFixed(2)} 倍</div></div>
+  </div>
+  <div class="detail-section"><h3>📋 资金流向明细（单人/月）</h3>${tableHTML}</div>
+  ${ocHTML}${compHTML}
+  <div class="result-actions">
+    <button class="btn btn-outline btn-sm" onclick="saveResult()">复制结果</button>
+    <button class="btn btn-outline btn-sm" onclick="exportCSV()">导出CSV</button>
+  </div>${footerHTML}`;
+
+  $('resultDesktop').innerHTML=html;$('resultDesktop').classList.add('show');
+  $('resultArea').innerHTML=html;$('resultArea').classList.add('show');
+
+  window.__lastCostResult=`【用人成本测算】
+公司月度综合成本：¥${fmt(month)}（${count}人）
+公司年度综合预算：¥${fmt(year)}
+法定用人成本：¥${fmt(legalCost)}
+其他企业成本：¥${fmt(otherTotal)}
+员工预计到手：¥${fmt(net)}
+法定成本系数：${legalRatio.toFixed(2)} 倍
+参数版本：${settings.version}`;
+}
+
+/* ========== 反向测算 ========== */
+function resetReverseDefaults(){
+  $('targetNet').value='5000';
+  document.querySelectorAll('#netScopeGroup .radio-item').forEach(r=>r.classList.remove('selected'));
+  document.querySelector('#netScopeGroup .radio-item').classList.add('selected');
+  document.querySelector('input[name="netScope"][value="fixed"]').checked=true;
+  document.querySelectorAll('#socialModeGroup .radio-item').forEach(r=>r.classList.remove('selected'));
+  document.querySelector('#socialModeGroup .radio-item').classList.add('selected');
+  document.querySelector('input[name="socialMode"][value="sync"]').checked=true;
+  $('manualSocialRow').style.display='none';
+  fundEnabledR=false;$('fundToggleR').checked=false;
+  $('fundBaseRowR').style.display='none';$('fundWarningR').style.display='block';
+  $('fundBaseR').value='0';
+  $('rSalaryPerformance').value='0';$('rSalaryCommission').value='0';$('rSalaryAllowance').value='0';
+  $('rWelfareCost').value='0';$('rRecruitCost').value='0';$('rEquipmentCost').value='0';$('rOtherCompanyCost').value='0';
+  $('rSpecialDeduction').value='0';$('rTaxMode').value='simple';$('rEmployeeCount').value='1';$('rInjuryRate').value='';
+}
+
+function doReverseCalc(){
+  const targetNet=n('targetNet');
+  if(targetNet<=0){showDialog('提示','请填写员工期望到手工资。');return;}
+  const socialMode=document.querySelector('input[name="socialMode"]:checked').value;
+  const manualSocialBase=socialMode==='manual'?n('manualSocialBase'):2080;
+  const count=Math.max(1,n('rEmployeeCount'));
+  const extras=n('rSalaryPerformance')+n('rSalaryCommission')+n('rSalaryAllowance')+n('rWelfareCost')+n('rRecruitCost')+n('rEquipmentCost')+n('rOtherCompanyCost');
+
+  // 获取高级覆盖
+  const ov=(id)=>{const el=$(id);return el&&el.value!==''?Number(el.value):null};
+  const injuryRateOR=ov('rInjuryRate');
+  const specDed=n('rSpecialDeduction');
+  const taxMode=$('rTaxMode').value;
+
+  // 自定义 ov 注入
+  function ovR(id){
+    if(id==='injuryRateOverride')return injuryRateOR;
+    if(id==='penBaseOverride'||id==='medBaseOverride'||id==='unempBaseOverride'||id==='injuryBaseOverride'||id==='fundBaseOverride'||id==='fundEmployerOverride'||id==='fundEmployeeOverride')return null; // 反向测算高级设置没有这些分项
+    return null;
+  }
+
+  // 最低档样本：社保固定
+  let fixedSocial=null;
+  if(socialMode==='min'){
+    fixedSocial=calcSocial(2080, fundEnabledR, fundEnabledR?n('fundBaseR'):0, (id)=>(id==='injuryRateOverride'?injuryRateOR:null));
+  }
+
+  // 手动填写社保
+  let manualSocial=null;
+  if(socialMode==='manual'){
+    manualSocial=calcSocial(manualSocialBase, fundEnabledR, fundEnabledR?n('fundBaseR'):0, (id)=>(id==='injuryRateOverride'?injuryRateOR:null));
+  }
+
+  // 二分查找
+  function calcNetFromGross(g){
+    let declaredWage, social;
+    if(socialMode==='sync'){
+      declaredWage=g;
+      social=calcSocial(declaredWage, fundEnabledR, fundEnabledR?n('fundBaseR'):0, (id)=>(id==='injuryRateOverride'?injuryRateOR:null));
+    }else if(socialMode==='min'){
+      social=fixedSocial;
+    }else{
+      social=manualSocial;
+    }
+    const taxR=calcTax(g, social.eeTotal, specDed, taxMode);
+    return {net:round2(g-social.eeTotal-taxR.tax), social, taxR, gross:g};
+  }
+
+  let lo=targetNet*0.5, hi=targetNet*3;
+  let result=null;
+  for(let i=0;i<120;i++){
+    const mid=(lo+hi)/2;
+    const r=calcNetFromGross(mid);
+    if(Math.abs(r.net-targetNet)<0.001){result=r;break;}
+    if(r.net<targetNet)lo=mid;else hi=mid;
+  }
+  if(!result)result=calcNetFromGross((lo+hi)/2);
+
+  const suggestedGross=round2(result.gross);
+  const finalR=calcNetFromGross(suggestedGross);
+  const socialResult=finalR.social;
+  const taxResult=finalR.taxR;
+  const netFinal=finalR.net;
+
+  const legalCost=suggestedGross+socialResult.erTotal+extras;
+  // 反向：legalCost不含额外绩效/成本
+  const pureLegalCost=round2(suggestedGross+socialResult.erTotal);
+  const compositeCost=round2(pureLegalCost+extras);
+  const month=round2(compositeCost*count);
+  const year=round2(month*12);
+
+  // 最低档对比
+  let compareResult=null;
+  if(socialMode==='sync'){
+    // 用最低档再算一次
+    const minSocial=calcSocial(2080, fundEnabledR, fundEnabledR?n('fundBaseR'):0, (id)=>(id==='injuryRateOverride'?injuryRateOR:null));
+    const minGross=binarySearchForNet(targetNet, (g)=>calcNetFromGrossWithSocial(g, minSocial, specDed, taxMode));
+    compareResult={gross:round2(minGross), social:minSocial};
+  }
+
+  renderReverseResult({targetNet,socialMode,count,suggestedGross,socialResult,taxResult,netFinal,pureLegalCost,extras,compositeCost,month,year,compareResult});
+}
+
+function calcNetFromGrossWithSocial(g, social, specDed, taxMode){
+  const taxR=calcTax(g, social.eeTotal, specDed, taxMode);
+  return round2(g-social.eeTotal-taxR.tax);
+}
+
+function binarySearchForNet(targetNet, netFn){
+  let lo=targetNet*0.5, hi=targetNet*3;
+  for(let i=0;i<120;i++){
+    const mid=(lo+hi)/2;
+    const n=netFn(mid);
+    if(Math.abs(n-targetNet)<0.001)return mid;
+    if(n<targetNet)lo=mid;else hi=mid;
+  }
+  return (lo+hi)/2;
+}
+
+function renderReverseResult(r){
+  const {targetNet,socialMode,count,suggestedGross,socialResult,taxResult,netFinal,pureLegalCost,extras,compositeCost,month,year,compareResult}=r;
+
+  // 到手拆解
+  let netBreakdown='';
+  socialResult.items.forEach(it=>{
+    if(it.ee>0||(it.base===0&&it.rateEE===0&&it.rateER===0)){
+      netBreakdown+=`<div class="br-row"><span class="br-label">减：个人${it.label}</span><span class="br-value">¥${fmt(it.ee)}</span></div>`;
+    }
+  });
+  if(taxResult.tax>0)netBreakdown+=`<div class="br-row"><span class="br-label">减：个人所得税</span><span class="br-value">¥${fmt(taxResult.tax)}</span></div>`;
+  else netBreakdown+=`<div class="br-row"><span class="br-label">减：个人所得税</span><span class="br-value">¥0.00</span></div>`;
+
+  // 公司支出拆解
+  let coBreakdown='';
+  coBreakdown+=`<div class="br-row"><span class="br-label">税前工资</span><span class="br-value">¥${fmt(suggestedGross)}</span></div>`;
+  socialResult.items.forEach(it=>{
+    if(it.er>0||(it.base===0&&it.rateEE===0&&it.rateER===0)){
+      coBreakdown+=`<div class="br-row"><span class="br-label">加：单位${it.label}</span><span class="br-value">¥${fmt(it.er)}</span></div>`;
+    }
+  });
+
+  // 方案对比
+  let compareHTML='';
+  if(compareResult){
+    const cs=compareResult;
+    const cLegal=round2(cs.gross+cs.social.erTotal);
+    const diffGross=round2(suggestedGross-cs.gross);
+    const diffLegal=round2(pureLegalCost-cLegal);
+    compareHTML=`
+    <div class="compare-section">
+      <button class="compare-toggle" id="compareToggle" onclick="toggleCompare()"><span class="arrow">▶</span> 查看不同社保方案对比</button>
+      <div class="compare-panel" id="comparePanel">
+        <table class="compare-table">
+          <thead><tr><th>方案</th><th>建议税前工资</th><th>公司每月法定成本</th><th>说明</th></tr></thead>
+          <tbody>
+            <tr><td>新员工同步税前工资</td><td>¥${fmt(suggestedGross)}</td><td>¥${fmt(pureLegalCost)}</td><td>推荐作为新员工谈薪参考</td></tr>
+            <tr><td>当前企业最低档样本</td><td>¥${fmt(cs.gross)}</td><td>¥${fmt(cLegal)}</td><td>用于内部预算比较</td></tr>
+            <tr class="diff"><td>差额</td><td>${diffGross>=0?'+':''}¥${fmt(diffGross)}</td><td>${diffLegal>=0?'+':''}¥${fmt(diffLegal)}</td><td>两种口径的预算差异</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+  }
+
+  // 其他成本卡片
+  const otherItems=[
+    {label:'绩效奖金', value:n('rSalaryPerformance')},
+    {label:'提成奖金', value:n('rSalaryCommission')},
+    {label:'津贴补贴', value:n('rSalaryAllowance')},
+    {label:'福利成本', value:n('rWelfareCost')},
+    {label:'招聘培训摊销', value:n('rRecruitCost')},
+    {label:'设备工位摊销', value:n('rEquipmentCost')},
+    {label:'其他公司成本', value:n('rOtherCompanyCost')}
+  ];
+  const otherTotal=otherItems.reduce((s,it)=>s+it.value,0);
+  const hasOther=otherTotal>0;
+
+  let ocHTML='';
+  if(hasOther){
+    const ocRows=otherItems.filter(it=>it.value>0).map(it=>`<div class="oc-row"><span class="oc-label">${it.label}</span><span class="oc-value">¥${fmt(it.value)}</span></div>`).join('');
+    ocHTML=`<div class="other-costs"><h3>📦 其他企业支出</h3>${ocRows}</div>`;
+  }
+
+  let compHTML='';
+  if(hasOther){
+    compHTML=`<div class="composite-budget"><h3>📊 企业综合预算</h3>
+      <div class="cb-row"><span class="cb-label">公司每月法定成本</span><span class="cb-value">¥${fmt(pureLegalCost)}</span></div>
+      <div class="cb-row"><span class="cb-label">其他企业支出（单人/月）</span><span class="cb-value">¥${fmt(otherTotal)}</span></div>
+      <div class="cb-total"><span>公司每月综合预算</span><span>= ¥${fmt(pureLegalCost)} + ¥${fmt(otherTotal)} = ¥${fmt(compositeCost)}</span></div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">× ${count} 人 = 月度 ¥${fmt(month)} · 年度 ¥${fmt(year)}</div></div>`;
+  }else{
+    compHTML=`<div class="composite-budget"><h3>📊 企业综合预算</h3>
+      <div class="cb-row"><span class="cb-label">公司每月法定成本</span><span class="cb-value">¥${fmt(pureLegalCost)}</span></div>
+      <div class="cb-total"><span>公司每月综合预算</span><span>= ¥${fmt(pureLegalCost)}</span></div>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">× ${count} 人 = 月度 ¥${fmt(pureLegalCost*count)} · 年度 ¥${fmt(pureLegalCost*count*12)}</div></div>`;
+  }
+
+  const modeLabel=socialMode==='sync'?'社保同步税前工资':socialMode==='min'?'当前企业最低档样本':'手动填写社保缴费工资';
+
+  const footerHTML=`<div class="result-footer">
+    企业用工成本估算器 · <b>V1.2</b>
+    <button class="btn btn-sm sync-btn" onclick="showPolicySource()" style="margin-left:8px">查看政策来源</button>
+    <br><span>测算结果仅供参考，正式申报请以当期政策为准。</span>
+    <br><span style="font-size:10px;opacity:.6">© c-with</span></div>`;
+
+  const html=`<div class="kpi-grid">
+    <div class="kpi-card light"><div class="kpi-label">员工期望到手</div><div class="kpi-value">¥${fmt(targetNet)}</div></div>
+    <div class="kpi-card dark"><div class="kpi-label">建议税前工资</div><div class="kpi-value">¥${fmt(suggestedGross)}</div></div>
+    <div class="kpi-card dark"><div class="kpi-label">公司每月法定成本</div><div class="kpi-value">¥${fmt(pureLegalCost)}</div></div>
+    <div class="kpi-card light"><div class="kpi-label">公司全年法定预算</div><div class="kpi-value">¥${fmt(pureLegalCost*12)}</div></div>
+  </div>
+  <div class="breakdown-card"><h3>🧑 员工到手拆解</h3>
+    <div class="br-row"><span class="br-label">建议税前工资</span><span class="br-value">¥${fmt(suggestedGross)}</span></div>
+    ${netBreakdown}
+    <div class="br-total"><span>员工预计到手</span><span>¥${fmt(netFinal)}</span></div>
+  </div>
+  <div class="breakdown-card"><h3>🏢 公司支出拆解</h3>
+    ${coBreakdown}
+    <div class="br-total"><span>公司每月法定成本</span><span>¥${fmt(pureLegalCost)}</span></div>
+  </div>
+  ${ocHTML}${compHTML}
+  ${compareHTML}
+  <div class="result-actions">
+    <button class="btn btn-outline btn-sm" onclick="copyReverseResult()">复制结果</button>
+  </div>${footerHTML}`;
+
+  $('resultDesktop').innerHTML=html;$('resultDesktop').classList.add('show');
+  $('resultArea').innerHTML=html;$('resultArea').classList.add('show');
+}
+
+function toggleCompare(){
+  const panel=$('comparePanel'),btn=$('compareToggle');
+  panel.classList.toggle('open');btn.classList.toggle('open');
+}
+
+function saveReverseResult(){doReverseCalc();copyText(window.__lastCostResult||'请先进行反向测算')}
+function copyReverseResult(){doReverseCalc();copyText(window.__lastCostResult||'请先进行反向测算')}
+
+/* ========== 公积金开关 ========== */
+function toggleFund(){
+  fundEnabled=$('fundToggle').checked;
+  $('fundBaseRow').style.display=fundEnabled?'block':'none';
+  $('fundWarning').style.display=fundEnabled?'none':'block';
+  $('fundRateRow').style.display=fundEnabled?'block':'none';
+  if(fundEnabled){
+    const salaryFixed=n('salaryFixed');
+    if(salaryFixed>0&&$('fundBase').value==='0')$('fundBase').value=salaryFixed;
+  }else{$('fundBase').value='0'}
+  doForwardCalc();
+}
+function toggleFundR(){
+  fundEnabledR=$('fundToggleR').checked;
+  $('fundBaseRowR').style.display=fundEnabledR?'block':'none';
+  $('fundWarningR').style.display=fundEnabledR?'none':'block';
+  if(fundEnabledR){
+    const tn=n('targetNet');
+    if(tn>0&&$('fundBaseR').value==='0')$('fundBaseR').value=tn;
+  }else{$('fundBaseR').value='0'}
+}
+
+/* ========== 绩效模板 ========== */
+function switchPerf(mode){
+  document.querySelectorAll('.perf-tab').forEach(t=>t.classList.remove('active'));
+  event.target.classList.add('active');
+  document.querySelectorAll('.perf-box').forEach(b=>b.classList.remove('active'));
+  $('perf'+{score:'Score',sales:'Sales',project:'Project',custom:'Custom'}[mode]).classList.add('active');
+}
+
+/* ========== 离职步骤 ========== */
+let currentTermStep=1;
+function nextStep(step){
+  document.querySelectorAll('.step').forEach(s=>s.classList.remove('active'));
+  currentTermStep=step;
+  $('termStep'+step).classList.add('active');
+  updateStepDots();
+}
+function updateStepDots(){
+  const s=$('termScenario').value;
+  const skipStep4=(s==='voluntary'||s==='misconduct');
+  const dots=document.querySelectorAll('.step-dot');
+  if(skipStep4){
+    dots.forEach((d,i)=>d.classList.toggle('active',i<Math.min(currentTermStep,4)+(currentTermStep===5?1:0)));
+  }else{
+    dots.forEach((d,i)=>d.classList.toggle('active',i<currentTermStep));
+  }
+}
+function termStep3Next(){
+  const s=$('termScenario').value;
+  if(s==='voluntary'||s==='misconduct'){
+    doTermCalc();
+  }else{
+    nextStep(4);
+  }
+}
+
+// 工龄输入模式切换
+let tenorMode='date';
+function switchTenorMode(mode){
+  tenorMode=mode;
+  $('tenorDateTab').classList.toggle('active',mode==='date');
+  $('tenorManualTab').classList.toggle('active',mode==='manual');
+  $('tenorDateMode').style.display=mode==='date'?'block':'none';
+  $('tenorManualMode').style.display=mode==='manual'?'block':'none';
+}
+
+function onScenarioChange(){
+  const s=$('termScenario').value;
+  // 代通知金：仅非过失性解除/经济性裁员可选
+  const showNotice=['article40','layoff'].includes(s);
+  $('noNoticeRow').style.display=showNotice?'block':'none';
+  if(!showNotice&&$('noNotice30'))$('noNotice30').checked=false;
+  // 二倍工资：仅可能有补偿的场景显示（排除主动辞职、严重违纪）
+  const showContract=['mutual','contract_end','article40','illegal','layoff'].includes(s);
+  $('noContractRow').style.display=showContract?'block':'none';
+  if(!showContract&&$('noWrittenContract'))$('noWrittenContract').checked=false;
+  // 严重违纪/主动辞职跳过步骤4
+  $('termStep4').style.display=(s==='voluntary'||s==='misconduct')?'none':'';
+  updateStepDots();
+}
+
+// 从日期计算工作月数
+function getWorkMonths(startDate,endDate){
+  if(!startDate||!endDate)return 0;
+  const s=new Date(startDate),e=new Date(endDate);
+  if(isNaN(s)||isNaN(e)||e<s)return 0;
+  let months=(e.getFullYear()-s.getFullYear())*12+(e.getMonth()-s.getMonth());
+  if(e.getDate()>=s.getDate())months+=1;
+  return Math.max(1,months);
+}
+// 从月数计算补偿月数（N）
+function getCompensationMonths(workMonths){
+  const fullYears=Math.floor(workMonths/12);
+  const remainder=workMonths%12;
+  if(remainder===0)return fullYears;
+  return fullYears+(remainder<6?0.5:1);
+}
+
+function doTermCalc(){
+  const scenario=$('termScenario').value;
+  // 获取工龄
+  let workMonths;
+  if(tenorMode==='manual'){
+    workMonths=Math.max(0,Math.floor(n('termManualMonths')));
+  }else{
+    workMonths=getWorkMonths($('termStart').value,$('termEnd').value);
+  }
+  let compMonths=getCompensationMonths(workMonths);
+
+  // 工资基数计算（3倍封顶+最低保底）
+  let rawWage=n('termAvgWage');
+  const localAvg=Number(settings.localAvgSalary)||8500;
+  const minWage=Number(settings.minimumWage)||2080;
+  const capThree=localAvg*3;
+  const cappedWage=Math.min(rawWage,capThree);
+  const adjustedWage=Math.max(cappedWage,minWage);
+  const wasCapped=rawWage>capThree;
+  const wasFloored=rawWage<minWage&&rawWage>0;
+
+  // 高薪封顶时年限最高不超过12年（劳动合同法第47条第2款）
+  if(wasCapped&&compMonths>12){
+    compMonths=12;
+  }
+
+  // 经济补偿
+  let compensation=0,plusOne=0,uncontractedPay=0;
+  const rules=[],warnings=[];
+
+  const hasCompensation=['mutual','contract_end','article40','layoff'].includes(scenario);
+
+  if(scenario==='illegal'){
+    compensation=adjustedWage*compMonths*2;
+    rules.push('《劳动合同法》第48条、第87条：违法解除或终止时，赔偿金按经济补偿标准二倍计算');
+  }else if(scenario==='misconduct'){
+    compensation=0;
+    rules.push('《劳动合同法》第39条：严重违反规章制度等情形，单位可解除且不支付经济补偿');
+    warnings.push('严重违纪是否成立高度依赖规章制度合法性、民主程序、公示送达和证据链');
+  }else if(scenario==='voluntary'){
+    compensation=0;
+    rules.push('普通主动辞职一般不属于《劳动合同法》第46条列明的经济补偿情形');
+  }else if(hasCompensation){
+    compensation=adjustedWage*compMonths;
+    if(scenario==='mutual'){
+      rules.push('《劳动合同法》第36条：用人单位与劳动者协商一致，可以解除劳动合同');
+      rules.push('《劳动合同法》第46条第（二）项：用人单位提出并与劳动者协商一致解除劳动合同的，应当支付经济补偿');
+    }else if(scenario==='layoff'){
+      rules.push('《劳动合同法》第41条：有下列情形之一，需要裁减人员二十人以上或者不足二十人但占企业职工总数百分之十以上的，用人单位提前三十日向工会或者全体职工说明情况，听取意见后将方案报劳动行政部门后方可裁减人员：（一）依照企业破产法规定进行重整的；（二）生产经营发生严重困难的；（三）企业转产、重大技术革新或者经营方式调整，经变更劳动合同后，仍需裁减人员的；（四）其他因劳动合同订立时所依据的客观经济情况发生重大变化，致使劳动合同无法履行的');
+      rules.push('《劳动合同法》第46条第（四）项：经济性裁员，用人单位应当支付经济补偿');
+    }else{
+      rules.push('《劳动合同法》第46、47条：符合情形时，每满一年支付一个月工资，不满六个月支付半个月，六个月以上不满一年按一年计算');
+    }
+    rules.push('《劳动合同法》第47条：经济补偿按劳动者在本单位工作的年限，每满一年支付一个月工资的标准向劳动者支付；六个月以上不满一年的，按一年计算；不满六个月的，向劳动者支付半个月工资的经济补偿');
+  }
+
+  // 代通知金（仅非过失性解除/经济性裁员，且未提前30天通知）
+  const showNotice=['article40','layoff'].includes(scenario);
+  if(showNotice&&$('noNotice30')&&$('noNotice30').checked){
+    plusOne=n('termLastWage');
+    rules.push('《劳动合同法》第40条：未提前30日书面通知的，额外支付一个月工资作为代通知金');
+  }
+
+  // 未签书面合同二倍工资差额（按实际工资计算，不受3倍封顶限制）
+  if($('noWrittenContract')&&$('noWrittenContract').checked){
+    const actualWage=rawWage>0?rawWage:minWage;
+    let uncontractedMonths=Math.min(11,Math.max(0,workMonths-1));
+    if(uncontractedMonths>0){
+      uncontractedPay=actualWage*uncontractedMonths;
+      rules.push('《劳动合同法》第82条、《实施条例》第6、7条：超过一个月不满一年未签书面劳动合同的，支付二倍工资差额（最长11个月）');
+      if(workMonths>=12)warnings.push('入职满一年仍未签书面合同的，可能视为已订立无固定期限劳动合同');
+    }
+  }
+
+  // 场景特定提示
+  if(scenario==='contract_end')warnings.push('合同到期终止时，若单位维持或提高原条件续签而你拒绝续签，通常没有经济补偿');
+  if(scenario==='layoff')warnings.push('经济性裁员还需关注提前说明、听取意见、向劳动行政部门报告等程序要求');
+
+  // 其他结算（未休年假按实际工资计算日工资）
+  const actualWageForSettlement=rawWage>0?rawWage:minWage;
+  const annualDays=n('termAnnualDays'),daily=actualWageForSettlement/21.75;
+  const annualExtra=daily*annualDays*2;
+  const settlements=n('termUnpaidSalary')+n('termUnpaidPerf')+n('termUnpaidCommission')+annualExtra+n('termReimburse')+n('termOther');
+
+  // 汇总
+  const compTotal=round2(compensation+plusOne);
+  const total=round2(compensation+plusOne+uncontractedPay+settlements);
+
+  // 不确定性区间
+  const uncertainty=total>0?Math.max(adjustedWage*0.5,total*0.08):0;
+  const totalLow=round2(Math.max(0,total-uncertainty));
+  const totalHigh=round2(total+uncertainty);
+
+  // 工龄显示
+  const workYearsText=Math.floor(workMonths/12)+'年'+(workMonths%12)+'个月';
+  $('tN').textContent=compMonths.toFixed(1)+' N（'+workYearsText+'）';
+  $('tComp').textContent='¥'+fmt(compTotal);
+  // 补偿基数
+  if(compensation>0||plusOne>0){
+    $('tBaseRow').style.display='flex';
+    let baseText='¥'+fmt(adjustedWage)+'/月';
+    if(wasCapped)baseText+='（3倍社平封顶）';
+    if(wasFloored)baseText+='（最低工资保底）';
+    $('tBase').textContent=baseText;
+  }else{
+    $('tBaseRow').style.display='none';
+  }
+
+  // 代通知金
+  if(plusOne>0){
+    $('tPlusOneLabel').style.display='block';
+    $('tPlusOne').style.display='block';
+    $('tPlusOne').textContent='¥'+fmt(plusOne);
+  }else{
+    $('tPlusOneLabel').style.display='none';
+    $('tPlusOne').style.display='none';
+  }
+
+  // 二倍工资
+  if(uncontractedPay>0){
+    $('tUncontractLabel').style.display='block';
+    $('tUncontract').style.display='block';
+    $('tUncontract').textContent='¥'+fmt(uncontractedPay);
+  }else{
+    $('tUncontractLabel').style.display='none';
+    $('tUncontract').style.display='none';
+  }
+
+  $('tSettle').textContent='¥'+fmt(settlements);
+  $('tTotal').textContent='¥'+fmt(total);
+
+  // 浮动范围
+  if(total>0){
+    $('tRangeRow').style.display='flex';
+    $('tRange').textContent='¥'+fmt(totalLow)+' ~ ¥'+fmt(totalHigh);
+  }else{
+    $('tRangeRow').style.display='none';
+  }
+
+  // 法条引用
+  $('tRules').innerHTML=rules.map(r=>'§ '+r).join('<br>');
+
+  // 风险提示
+  const risks=[...document.querySelectorAll('#termStep4 input:checked')].map(x=>x.value);
+  let riskText='';
+  if(risks.length)riskText+='⚠ 高风险：'+risks.join('；');
+  if(wasCapped)riskText+='⚠ 月工资超过当地社平3倍（¥'+fmt(capThree)+'），补偿基数已封顶\n';
+  if(wasFloored)riskText+='⚠ 月工资低于当地最低工资（¥'+fmt(minWage)+'），补偿基数已按最低工资保底\n';
+  warnings.forEach(w=>riskText+='⚠ '+w+'\n');
+  $('tRisk').textContent=riskText;
+
+  nextStep(5);
+  window.__lastTermText=`离职成本测算
+场景：${$('termScenario').selectedOptions[0].textContent}
+工作年限：${workYearsText}（${compMonths.toFixed(1)}N）
+经济补偿/赔偿：¥${fmt(compTotal)}
+${plusOne>0?'代通知金：¥'+fmt(plusOne)+'\n':''}${uncontractedPay>0?'未签合同二倍工资：¥'+fmt(uncontractedPay)+'\n':''}其他结算：¥${fmt(settlements)}
+总成本：¥${fmt(total)}（浮动 ¥${fmt(totalLow)}~¥${fmt(totalHigh)}）`;
+  track('feature','term_calc',scenario);
+  track('calc','term',$('termScenario').selectedOptions[0].textContent);
+}
+
+/* ========== 埋点 ========== */
+const TRACK_VID='vid_'+Math.random().toString(36).slice(2,10)+Date.now().toString(36);
+function track(type,action,detail){
+  try{
+    fetch('api/track',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type,page:currentPage||'home',action,detail,visitorId:TRACK_VID})}).catch(()=>{});
+  }catch(e){}
+}
+let currentPage='home';
+// 页面访问埋点
+track('page_view','home',TRACK_VID);
+let annuityEnabled=false,unionEnabled=false;
+function toggleAnnuity(){
+  annuityEnabled=$('annuityToggle').checked;
+  $('annuityRow').style.display=annuityEnabled?'block':'none';
+  doForwardCalc();
+}
+function toggleUnion(){
+  unionEnabled=$('unionToggle').checked;
+  $('unionRow').style.display=unionEnabled?'block':'none';
+  doForwardCalc();
+}
+
+/* ========== 绩效计算 ========== */
+function doPerfCalc(){
+  const mode=document.querySelector('.perf-tab.active').textContent;
+  let value=0,detail='';
+  if(mode==='评分系数'){
+    const c=$('perfScoreVal').value>=100?1.3:$('perfScoreVal').value>=90?1.1:$('perfScoreVal').value>=80?1:$('perfScoreVal').value>=60?.8:.5;
+    value=n('perfBase')*c;
+    detail=`绩效基数 ¥${fmt(n('perfBase'))}\n得分 ${$('perfScoreVal').value}分\n系数 ${c}`;
+  }else if(mode==='销售提成'){
+    const rev=n('salesRevenue'),l1=n('salesTier1Limit'),l2=n('salesTier2Limit');
+    const r1=n('salesTier1Rate')/100,r2=n('salesTier2Rate')/100,r3=n('salesTier3Rate')/100;
+    value=$('salesType').value==='jump'?rev*(rev<=l1?r1:rev<=l2?r2:r3):Math.min(rev,l1)*r1+Math.max(0,Math.min(rev,l2)-l1)*r2+Math.max(0,rev-l2)*r3;
+    detail=`销售额 ¥${fmt(rev)}\n提成 ¥${fmt(value)}`;
+  }else if(mode==='项目奖金'){
+    const pool=n('projectGrossProfit')*n('projectPoolRate')/100;
+    value=pool*n('projectWeight')/100*n('projectQuality')/100*n('projectCollection')/100;
+    detail=`项目奖金 ¥${fmt(value)}`;
+  }else{
+    value=n('customPerf');
+    detail=`手动填写 ¥${fmt(value)}`;
+  }
+  $('perfValue').textContent='¥'+fmt(value);
+  $('perfDetail').textContent=detail;
+  $('perfResult').classList.add('show');
+  window.__lastPerfValue=value;
+  track('feature','perf_calc',mode);
+}
+function applyPerf(){
+  doPerfCalc();
+  $('salaryPerformance').value=window.__lastPerfValue.toFixed(2);
+  navigateTo('cost');
+  showDialog('已带入','绩效结果已填入"用人成本 → 绩效工资"，可点击计算查看结果。');
+}
+function savePerfResult(){
+  doPerfCalc();
+  copyText('绩效计算\n'+$('perfDetail').textContent);
+}
+
+/* ========== 离职计算（旧代码已清除，新版在上方） ========== */
+function saveTermResult(){
+  doTermCalc();
+  copyText(window.__lastTermText||'请先计算');
+}
+
+/* ========== 历史 & 剪贴板 ========== */
+function saveResult(){doForwardCalc();copyText(window.__lastCostResult||'请先点击计算')}
+function copyResult(){doForwardCalc();copyText(window.__lastCostResult||'请先点击计算')}
+function exportCSV(){
+  doForwardCalc();
+  const bonus=n('annualBonus');
+  const bonusResult=bonus>0?calcBonusTax(bonus):{tax:0,net:0};
+  const rows=[
+    ['项目','公司支出（元/月）','员工扣除（元/月）','说明'],
+    ['税前固定工资','','',n('salaryFixed')],
+    ['绩效/提成/津贴','','',n('salaryPerformance')+n('salaryCommission')+n('salaryAllowance')],
+  ];
+  const social=calcSocial(n('socialBase'),fundEnabled,n('fundBase'),(id)=>$(id).value!==''?n(id):null);
+  social.items.forEach(it=>{
+    if(!(it.base===0&&it.rateER===0&&it.rateEE===0)){
+      rows.push([it.label,it.er,it.ee,it.baseDesc]);
+    }
+  });
+  rows.push(['社保公积金合计',social.erTotal,social.eeTotal,'']);
+  if(annuityEnabled){
+    rows.push(['企业年金',n('socialBase')*n('annuityER')/100,n('socialBase')*n('annuityEE')/100,'单位'+n('annuityER')+'% 个人'+n('annuityEE')+'%']);
+  }
+  if(unionEnabled){
+    rows.push(['工会费',(n('salaryFixed')+n('salaryPerformance')+n('salaryCommission')+n('salaryAllowance'))*n('unionRate')/100,'','费率'+n('unionRate')+'%']);
+  }
+  const gross=n('salaryFixed')+n('salaryPerformance')+n('salaryCommission')+n('salaryAllowance');
+  const taxMode=$('taxMode').value;
+  const taxExtra=taxMode==='cumulative'?{accumulatedTaxable:n('accTaxable'),accumulatedTaxPaid:n('accTaxPaid')}:{};
+  const taxR=calcTax(gross,social.eeTotal,n('specialDeduction'),taxMode,taxExtra);
+  rows.push(['个人所得税','',taxR.tax,taxR.mode==='cumulative'?'累计预扣法':'月度简化']);
+  if(bonus>0){
+    rows.push(['年终奖（单独计税）','',bonusResult.tax,'金额'+bonus+' 税后'+bonusResult.net]);
+  }
+  const extras=n('welfareCost')+n('recruitCost')+n('equipmentCost')+n('otherCompanyCost');
+  const legalCost=round2(gross+social.erTotal+(annuityEnabled?n('socialBase')*n('annuityER')/100:0)+(unionEnabled?gross*n('unionRate')/100:0));
+  const compositeCost=round2(legalCost+extras);
+  const count=Math.max(1,n('employeeCount'));
+  rows.push(['','','','']);
+  rows.push(['法定用工成本（单人/月）',legalCost,'','']);
+  rows.push(['综合成本（'+count+'人/月）',round2(compositeCost*count),'','']);
+  rows.push(['年度综合预算',round2(compositeCost*count*12),'','']);
+  rows.push(['员工预计到手','',round2(gross-social.eeTotal-taxR.tax),'']);
+
+  const csv='\ufeff'+rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='用工成本测算_'+new Date().toISOString().slice(0,10)+'.csv';
+  document.body.appendChild(a);a.click();document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  showDialog('已导出','CSV 文件已开始下载，可用 Excel 打开。');
+}
+function saveHistory(type,summary,amount){
+  try{
+    const arr=JSON.parse(localStorage.getItem(HISTORY_KEY)||'[]');
+    arr.unshift({type,summary,amount:Number(amount)||0,time:new Date().toLocaleString('zh-CN')});
+    localStorage.setItem(HISTORY_KEY,JSON.stringify(arr.slice(0,20)));
+    showDialog('已保存','结果已保存到浏览器本地。');
+  }catch(e){showDialog('保存失败','浏览器可能禁止了本地存储。')}
+}
+async function copyText(text){
+  try{await navigator.clipboard.writeText(text);showDialog('已复制','结果已复制到剪贴板。')}
+  catch(e){
+    const ta=document.createElement('textarea');ta.value=text;ta.style.cssText='position:fixed;left:-9999px';
+    document.body.appendChild(ta);ta.select();
+    try{document.execCommand('copy');showDialog('已复制','结果已复制到剪贴板。')}catch(e2){showDialog('复制失败','请手动复制。')}
+    document.body.removeChild(ta);
+  }
+}
+
+function showPolicySource(){
+  showDialog('政策来源','政策参数版本：企业实缴校准版 · 2026-05\n校准依据：当前企业 2026 年 5 月实际缴费样本\n\n费率明细：\n· 养老保险：单位 16% · 个人 8%（基数下限 4,775）\n· 基本医疗保险（含生育）：单位 6% · 个人 1.5%（基数下限 4,775）\n· 失业保险：单位 0.8% · 个人 0.2%（基数下限 2,080）\n· 工伤保险：单位 0.4%（基数下限 2,080）\n\n正式申报请以当期政策为准。');
+}
+function showDialog(title,body){
+  $('dialogTitle').textContent=title;$('dialogBody').textContent=body;
+  const d=$('dialog');
+  try{if(d.showModal){d.showModal();return}}catch(e){}
+  d.style.display='block';d.style.position='fixed';d.style.top='50%';d.style.left='50%';
+  d.style.transform='translate(-50%,-50%)';d.style.zIndex='9999';d.setAttribute('data-polyfill','1');
+}
+function closeDialog(){
+  const d=$('dialog');try{d.close()}catch(e){}d.style.display='';d.removeAttribute('data-polyfill');
+}
+
+/* ========== 初始化 ========== */
+function init(){
+  $('termEnd').value=new Date().toISOString().slice(0,10);
+  // 正向表单初始状态
+  fundEnabled=false;$('fundToggle').checked=false;
+  $('fundBaseRow').style.display='none';$('fundWarning').style.display='block';
+  $('fundRateRow').style.display='none';$('fundBase').value='0';
+  // 反向表单初始状态
+  fundEnabledR=false;$('fundToggleR').checked=false;
+  $('fundBaseRowR').style.display='none';$('fundWarningR').style.display='block';
+  $('fundBaseR').value='0';
+  // 社保基数追踪
+  socialBaseManuallySet=false;
+  $('socialBase').addEventListener('input',()=>{socialBaseManuallySet=true});
+  $('salaryFixed').addEventListener('input',()=>{
+    if(!socialBaseManuallySet){
+      $('socialBase').value=$('salaryFixed').value;
+      if(fundEnabled)$('fundBase').value=$('salaryFixed').value;
+    }
+  });
+  // 实时计算：仅正向模式下监听
+  document.querySelectorAll('#page-cost input,#page-cost select').forEach(el=>{
+    const handler=()=>{if(calcMode==='forward'&&el.closest('#forwardForm'))doForwardCalc()};
+    el.addEventListener('input',handler);el.addEventListener('change',handler);
+  });
+  // 初始计算
+  doForwardCalc();
+}
+init();
+</script>
+
+</body>
+</html>

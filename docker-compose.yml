@@ -1,0 +1,32 @@
+services:
+  human-money-web:
+    build: .
+    image: human-money:${IMAGE_TAG:-latest}
+    expose:
+      - "3100"
+    volumes:
+      - human-money-data:/app/data
+    environment:
+      - NODE_ENV=production
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3100/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - edge
+      - human-money_internal
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  human-money-data:
+
+networks:
+  edge:
+    external: true
+  human-money_internal:

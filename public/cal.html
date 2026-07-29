@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>数据分析 - 企业用工成本工具箱</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--primary:#059669;--primary-light:#10b981;--primary-soft:#ecfdf5;--bg:#f8fafc;--card:#fff;--text:#1e293b;--muted:#94a3b8;--line:#e2e8f0;--warn:#f59e0b;--danger:#ef4444}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);padding:16px;max-width:1200px;margin:0 auto}
+h1{font-size:22px;margin-bottom:4px}
+.subtitle{font-size:13px;color:var(--muted);margin-bottom:20px}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px}
+.kpi-card{background:var(--card);border-radius:14px;padding:16px;border:1px solid var(--line)}
+.kpi-label{font-size:12px;color:var(--muted);margin-bottom:6px}
+.kpi-value{font-size:28px;font-weight:800;color:var(--text)}
+.kpi-delta{font-size:11px;margin-top:4px}
+.kpi-delta.up{color:var(--primary)}
+.kpi-delta.down{color:var(--danger)}
+.section{background:var(--card);border-radius:14px;padding:16px;border:1px solid var(--line);margin-bottom:16px}
+.section h2{font-size:15px;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.chart-wrap{position:relative;width:100%}
+canvas{display:block;width:100%}
+.bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:13px}
+.bar-label{width:100px;text-align:right;flex-shrink:0;color:#475569}
+.bar-track{flex:1;height:24px;background:#f1f5f9;border-radius:6px;overflow:hidden;position:relative}
+.bar-fill{height:100%;border-radius:6px;transition:width .3s}
+.bar-val{position:absolute;right:8px;top:4px;font-size:11px;color:#fff;font-weight:600;line-height:16px}
+.log-table{width:100%;border-collapse:collapse;font-size:12px}
+.log-table th{text-align:left;padding:6px 8px;border-bottom:2px solid var(--line);color:var(--muted);font-weight:600}
+.log-table td{padding:6px 8px;border-bottom:1px solid var(--line)}
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+.tag-page{background:#dbeafe;color:#1e40af}
+.tag-feature{background:#dcfce7;color:#166534}
+.tag-calc{background:#fef3c7;color:#92400e}
+.refresh-btn{background:var(--primary);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-size:13px;cursor:pointer;margin-bottom:16px}
+.refresh-btn:active{opacity:.8}
+.empty{text-align:center;color:var(--muted);padding:30px;font-size:13px}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:768px){.grid-2{grid-template-columns:1fr}.kpi-grid{grid-template-columns:repeat(2,1fr)}.bar-label{width:70px}}
+</style>
+</head>
+<body>
+<h1>数据看板</h1>
+<p class="subtitle">访问统计 · 功能使用 · 实时记录 · 更新时间 <span id="updateTime">-</span></p>
+<button class="refresh-btn" onclick="loadStats()">刷新数据</button>
+
+<div class="filter-bar" style="display:flex;gap:8px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
+  <label style="font-size:13px;color:#475569">日期范围：</label>
+  <input type="date" id="dateFrom" style="padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px">
+  <span style="color:var(--muted)">~</span>
+  <input type="date" id="dateTo" style="padding:6px 10px;border:1px solid var(--line);border-radius:8px;font-size:13px">
+  <button class="refresh-btn" style="background:var(--primary)" onclick="loadStats()">查询</button>
+  <button class="refresh-btn" style="background:#64748b" onclick="clearFilter()">全部</button>
+</div>
+
+<div class="kpi-grid" id="kpiGrid"></div>
+
+<div class="grid-2">
+  <div class="section">
+    <h2>近7天访问趋势</h2>
+    <div class="chart-wrap"><canvas id="trendChart" width="500" height="200"></canvas></div>
+  </div>
+  <div class="section">
+    <h2>今日小时分布</h2>
+    <div class="chart-wrap"><canvas id="hourChart" width="500" height="200"></canvas></div>
+  </div>
+</div>
+
+<div class="grid-2">
+  <div class="section">
+    <h2>功能使用分布</h2>
+    <div id="funcBars"></div>
+  </div>
+  <div class="section">
+    <h2>离职场景分布</h2>
+    <div id="scenarioBars"></div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>薪资范围分布</h2>
+  <div id="salaryBars"></div>
+</div>
+
+<div class="grid-2">
+  <div class="section">
+    <h2>访问地区 TOP10</h2>
+    <div id="regionBars"></div>
+  </div>
+  <div class="section">
+    <h2>设备机型分布</h2>
+    <div id="deviceBars"></div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>最近访问记录</h2>
+  <table class="log-table">
+    <thead><tr><th>时间</th><th>类型</th><th>页面</th><th>操作</th><th>地区</th><th>设备</th></tr></thead>
+    <tbody id="logBody"></tbody>
+  </table>
+</div>
+
+<script>
+function fmt(n){return new Intl.NumberFormat('zh-CN').format(n||0)}
+
+async function loadStats(){
+  try{
+    const from=document.getElementById('dateFrom').value;
+    const to=document.getElementById('dateTo').value;
+    let url='api/stats/overview';
+    const qp=[];
+    if(from)qp.push('from='+from);
+    if(to)qp.push('to='+to);
+    if(qp.length)url+='?'+qp.join('&');
+    const r=await fetch(url);
+    const d=(await r.json()).data;
+    if(!d)return;
+    renderKPIs(d);
+    renderTrend(d.dailyTrend||[]);
+    renderHourly(d.hourly||[]);
+    renderBars('funcBars',d.funcUsage||[],['#059669','#10b981','#34d399','#6ee7b7']);
+    renderBars('scenarioBars',d.scenarioStats||[],['#3b82f6','#6366f1','#8b5cf6','#ec4899','#f59e0b','#ef4444','#14b8a6']);
+    renderSalaryBars(d.salaryRange||[]);
+    renderRegionBars(d.regionStats||[]);
+    renderDeviceBars(d.deviceStats||[]);
+    renderLogs(d.recentEvents||[]);
+    document.getElementById('updateTime').textContent=new Date().toLocaleTimeString('zh-CN');
+  }catch(e){console.error(e)}
+}
+
+function clearFilter(){
+  document.getElementById('dateFrom').value='';
+  document.getElementById('dateTo').value='';
+  loadStats();
+}
+
+function renderKPIs(d){
+  const pvDelta=d.todayPV-d.yesterdayPV;
+  const html=`
+    <div class="kpi-card"><div class="kpi-label">总访问量</div><div class="kpi-value">${fmt(d.totalEvents)}</div></div>
+    <div class="kpi-card"><div class="kpi-label">总访客数</div><div class="kpi-value">${fmt(d.totalVisitors)}</div></div>
+    <div class="kpi-card"><div class="kpi-label">今日 PV</div><div class="kpi-value">${fmt(d.todayPV)}</div><div class="kpi-delta ${pvDelta>=0?'up':'down'}">${pvDelta>=0?'↑':'↓'} ${fmt(Math.abs(pvDelta))} vs 昨日</div></div>
+    <div class="kpi-card"><div class="kpi-label">今日 UV</div><div class="kpi-value">${fmt(d.todayUV)}</div></div>
+  `;
+  document.getElementById('kpiGrid').innerHTML=html;
+}
+
+function drawBarChart(canvasId,labels,values,colors,color1,color2){
+  const cv=document.getElementById(canvasId);
+  const ctx=cv.getContext('2d');
+  const dpr=window.devicePixelRatio||1;
+  const w=cv.offsetWidth,h=200;
+  cv.width=w*dpr;cv.height=h*dpr;cv.style.height=h+'px';
+  ctx.scale(dpr,dpr);
+  ctx.clearRect(0,0,w,h);
+  if(!values.length){ctx.fillStyle='#94a3b8';ctx.font='13px sans-serif';ctx.textAlign='center';ctx.fillText('暂无数据',w/2,h/2);return}
+  const maxV=Math.max(...values,1);
+  const barW=(w-40)/values.length*0.6;
+  const gap=(w-40)/values.length;
+  const labelsShort=labels.map(l=>{const s=String(l);return s.length>6?s.slice(-5):s});
+  values.forEach((v,i)=>{
+    const x=20+i*gap+(gap-barW)/2;
+    const barH=Math.max(2,(v/maxV)*(h-50));
+    const y=h-30-barH;
+    const grad=ctx.createLinearGradient(0,y,0,h-30);
+    grad.addColorStop(0,color1);grad.addColorStop(1,color2);
+    ctx.fillStyle=grad;
+    ctx.beginPath();
+    const r=Math.min(4,barW/2);
+    ctx.moveTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);ctx.arcTo(x+barW,y,x+barW,y+r,r);
+    ctx.lineTo(x+barW,h-30);ctx.lineTo(x,h-30);
+    ctx.fill();
+    ctx.fillStyle='#94a3b8';ctx.font='10px sans-serif';ctx.textAlign='center';
+    ctx.fillText(labelsShort[i],x+barW/2,h-16);
+    ctx.fillStyle='#1e293b';ctx.font='bold 11px sans-serif';
+    ctx.fillText(fmt(v),x+barW/2,y-4);
+  });
+}
+
+function renderTrend(data){
+  const labels=data.map(d=>d.d.slice(5));
+  const pv=data.map(d=>d.pv);
+  drawBarChart('trendChart',labels,pv,null,'#10b981','#059669');
+}
+
+function renderHourly(data){
+  const labels=data.map(d=>d.h+':00');
+  const vals=data.map(d=>d.c);
+  drawBarChart('hourChart',labels,vals,null,'#818cf8','#6366f1');
+}
+
+function renderBars(elId,data,colors){
+  const el=document.getElementById(elId);
+  if(!data.length){el.innerHTML='<div class="empty">暂无数据</div>';return}
+  const maxC=Math.max(...data.map(d=>d.c),1);
+  el.innerHTML=data.map((d,i)=>{
+    const pct=(d.c/maxC)*100;
+    const color=colors[i%colors.length];
+    const label=d.action||d.detail||d.range||'未知';
+    return `<div class="bar-row"><span class="bar-label">${label}</span><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}"></div><span class="bar-val">${d.c}</span></div></div>`;
+  }).join('');
+}
+
+function renderSalaryBars(data){
+  const el=document.getElementById('salaryBars');
+  if(!data.length){el.innerHTML='<div class="empty">暂无数据</div>';return}
+  // Define order
+  const order=['<3k','3-5k','5-8k','8-12k','12-20k','20k+'];
+  const map={};data.forEach(d=>map[d.range]=d.c);
+  const maxC=Math.max(...data.map(d=>d.c),1);
+  const colors=['#94a3b8','#64748b','#3b82f6','#6366f1','#8b5cf6','#ec4899'];
+  el.innerHTML=order.map((r,i)=>{
+    const c=map[r]||0;
+    const pct=(c/maxC)*100;
+    return `<div class="bar-row"><span class="bar-label">${r}</span><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${colors[i]}"></div><span class="bar-val">${c}</span></div></div>`;
+  }).join('');
+}
+
+function renderRegionBars(data){
+  const el=document.getElementById('regionBars');
+  if(!data.length){el.innerHTML='<div class="empty">暂无数据</div>';return}
+  const maxC=Math.max(...data.map(d=>d.c),1);
+  el.innerHTML=data.map((d,i)=>{
+    const pct=(d.c/maxC)*100;
+    const colors=['#0ea5e9','#0284c7','#0369a1','#075985','#0c4a6e','#1e40af','#1e3a8a','#3730a3','#312e81','#1e1b4b'];
+    return `<div class="bar-row"><span class="bar-label">${d.region}</span><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${colors[i%colors.length]}"></div><span class="bar-val">${d.c}</span></div></div>`;
+  }).join('');
+}
+
+function renderDeviceBars(data){
+  const el=document.getElementById('deviceBars');
+  if(!data.length){el.innerHTML='<div class="empty">暂无数据</div>';return}
+  const maxC=Math.max(...data.map(d=>d.c),1);
+  const colors={iPhone:'#3b82f6',iPad:'#8b5cf6',Android:'#10b981','Mac':'#64748b',Windows:'#6366f1',Linux:'#f59e0b','其他':'#94a3b8'};
+  el.innerHTML=data.map(d=>{
+    const pct=(d.c/maxC)*100;
+    const color=colors[d.device]||'#94a3b8';
+    return `<div class="bar-row"><span class="bar-label">${d.device}</span><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}"></div><span class="bar-val">${d.c}</span></div></div>`;
+  }).join('');
+}
+
+function renderLogs(data){
+  const el=document.getElementById('logBody');
+  if(!data.length){el.innerHTML='<tr><td colspan="6" class="empty">暂无记录</td></tr>';return}
+  const typeMap={page_view:['页面访问','tag-page'],feature:['功能使用','tag-feature'],calc:['计算','tag-calc']};
+  el.innerHTML=data.map(e=>{
+    const [label,cls]=typeMap[e.type]||[e.type,'tag-page'];
+    return `<tr><td>${e.ts}</td><td><span class="tag ${cls}">${label}</span></td><td>${e.page||'-'}</td><td>${e.action||'-'}</td><td style="font-size:11px;color:#64748b">${e.region||'-'}</td><td style="font-size:11px">${e.device||'-'}</td></tr>`;
+  }).join('');
+}
+
+loadStats(); // 初始加载（默认近7天）
+setInterval(loadStats,30000);
+
+// 初始默认近7天
+(function(){
+  var today=new Date();
+  var weekAgo=new Date(today.getTime()-7*86400000);
+  var fmt=function(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+  document.getElementById('dateFrom').value=fmt(weekAgo);
+  document.getElementById('dateTo').value=fmt(today);
+  loadStats();
+})();
+</script>
+</body>
+</html>

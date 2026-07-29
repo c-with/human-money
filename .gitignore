@@ -1,0 +1,15 @@
+node_modules/
+data/*.json
+data/*.db
+data/*.db-shm
+data/*.db-wal
+!.gitkeep
+.env
+*.log
+*.zip
+.workbuddy/
+AUDIT_REPORT.md
+CODEX_NEXT_STEP.md
+# 根目录副本（正式文件在 public/ 下）
+/index.html
+/admin.html

@@ -1,0 +1,14 @@
+node_modules/
+.git/
+.env
+*.log
+*.zip
+.workbuddy/
+AUDIT_REPORT.md
+CODEX_NEXT_STEP.md
+README.md
+.gitignore
+docker-compose.yml
+Dockerfile
+/index.html
+/admin.html
